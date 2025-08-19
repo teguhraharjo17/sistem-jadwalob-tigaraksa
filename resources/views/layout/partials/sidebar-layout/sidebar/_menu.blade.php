@@ -15,7 +15,7 @@
 
 			<!--begin::Menu item - Dashboard-->
 			<div class="menu-item">
-				<a class="menu-link" href="/dashboard">
+				<a class="menu-link {{ request()->routeIs('dashboard.index') ? 'active' : '' }}" href="{{ route('dashboard.index') }}">
 					<span class="menu-icon">{!! getIcon('element-11', 'fs-2') !!}</span>
 					<span class="menu-title">Dashboard</span>
 				</a>

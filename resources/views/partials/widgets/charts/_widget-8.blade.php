@@ -225,4 +225,4 @@
 	</div>
 	<!--end::Body-->
 </div>
-<!--end::Chart widget 8-->
+<!--end::Chart widget 8-->

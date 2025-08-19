@@ -27,7 +27,6 @@ class AuthServiceProvider extends ServiceProvider
         $this->registerPolicies();
 
         Gate::define('isAdmin', function ($user) {
-            // sesuaikan dengan isi kolom `role` di database Anda
             return $user->role === 'Admin';
         });
     }

@@ -73,7 +73,7 @@
                                 <td class="text-start">{{ $laporan->mengetahui ?? '-' }}</td>
                                 <td class="text-center">
                                     @if ($laporan->paraf)
-                                        <img src="{{ asset('storage/'.$laporan->paraf) }}" alt="Paraf" width="40" height="40">
+                                        <img src="{{ asset('storage/'.$laporan->paraf) }}" alt="Paraf" width="85" height="85">
                                     @else
                                         -
                                     @endif
