@@ -5,7 +5,7 @@
 		<!--begin::Copyright-->
 		<div class="text-dark order-2 order-md-1">
 			<span class="text-muted fw-semibold me-1">{{ date('Y') }}&copy;</span>
-			<a href="https://ccas.co.id/" target="_blank" class="text-gray-800 text-hover-primary">IT Milenia Mega Mandiri</a>
+			<a href="https://ccas.co.id/" target="_blank" class="text-gray-800 text-hover-primary">Milenia Mega Mandiri</a>
 		</div>
 		<!--end::Copyright-->
 		<!--begin::Menu-->

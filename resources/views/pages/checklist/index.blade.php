@@ -471,6 +471,7 @@
                     '<"row mt-3"' +
                     '<"col-sm-6"l><"col-sm-6 text-end"p>>',
                 buttons: [
+                    @if(auth()->user()->hasRole('Admin'))
                     {
                         text: '<i class="fas fa-plus"></i> Tambah Jadwal',
                         className: 'btn custom-button btn-sm me-1',
@@ -478,6 +479,7 @@
                             $('#addJadwalOB').modal('show');
                         }
                     },
+                    @endif
                     {
                         extend: 'colvis',
                         text: '<i class="fas fa-columns"></i> Column Visible',

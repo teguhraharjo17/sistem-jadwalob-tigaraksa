@@ -9,6 +9,7 @@ use App\Models\ChecklistStatus;
 use App\Models\LaporanHarian;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class LaporanHarianController extends Controller
 {
@@ -140,11 +141,20 @@ class LaporanHarianController extends Controller
         }
 
         $parafPath = $laporan->paraf;
-        if ($request->hasFile('paraf')) {
+        if ($request->filled('paraf_signature_edit')) {
             if ($parafPath) {
                 Storage::disk('public')->delete($parafPath);
             }
-            $parafPath = $request->file('paraf')->store('paraf_approve', 'public');
+
+            $base64 = $request->input('paraf_signature_edit');
+            $base64 = str_replace('data:image/png;base64,', '', $base64);
+            $base64 = str_replace(' ', '+', $base64);
+
+            $filename = 'paraf_' . Str::random(10) . '.png';
+            $path = "paraf_approve/{$filename}";
+
+            Storage::disk('public')->put($path, base64_decode($base64));
+            $parafPath = $path;
         }
 
         $buktiPath = $laporan->bukti;

@@ -73,7 +73,7 @@
                                 <td class="text-start">{{ $laporan->mengetahui ?? '-' }}</td>
                                 <td class="text-center">
                                     @if ($laporan->paraf)
-                                        <img src="{{ asset('storage/'.$laporan->paraf) }}" alt="Paraf" width="85" height="85">
+                                        <img src="{{ asset('storage/'.$laporan->paraf) }}" alt="Paraf" class="img-paraf-preview">
                                     @else
                                         -
                                     @endif
@@ -243,10 +243,16 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="edit_paraf" class="form-label">Paraf</label>
-                                <input type="file" class="form-control" id="edit_paraf" name="paraf">
-                                <div id="preview_paraf" class="mt-2"></div>
+                                <label class="form-label">Paraf (Upload atau Gambar)</label>
+
+                                <input type="file" class="form-control mb-2" id="edit_paraf" name="paraf" accept="image/*">
+                                <div id="preview_paraf" class="mb-2"></div>
+
+                                <canvas id="editSignatureCanvas" class="border" style="width: 100%; height: 200px;"></canvas>
+                                <input type="hidden" name="paraf_signature_edit" id="paraf_signature_edit">
+                                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="clearEditSignature()">Hapus</button>
                             </div>
+
                         </div>
 
                         <div class="modal-footer">
@@ -519,6 +525,12 @@
             color: #d10000 !important;
             font-weight: bold;
         }
+
+        .img-paraf-preview {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
     </style>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -526,12 +538,26 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.datatables.net/rowgroup/1.1.5/js/dataTables.rowGroup.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 
     <script>
         const editUrlTemplate = "{{ route('laporanharian.edit', ':id') }}";
         const updateUrlTemplate = "{{ route('laporanharian.update', ':id') }}";
+        let editSignaturePad;
+
+        function resizeCanvas(canvas, signaturePadInstance) {
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            canvas.width = canvas.offsetWidth * ratio;
+            canvas.height = canvas.offsetHeight * ratio;
+            canvas.getContext("2d").scale(ratio, ratio);
+            signaturePadInstance.clear();
+        }
 
         $(document).ready(function () {
+            const editCanvas = document.getElementById("editSignatureCanvas");
+            editSignaturePad = new SignaturePad(editCanvas);
+            resizeCanvas(editCanvas, editSignaturePad);
+
             $('#tableLaporanHarian').DataTable({
                 scrollX: true,
                 paging: false,
@@ -574,6 +600,20 @@
                 }
             });
 
+            $('#item_pekerjaan').select2({
+                dropdownParent: $('#addLaporanHarian'),
+                placeholder: "Pilih Pekerjaan",
+                allowClear: true,
+                width: "100%"
+            });
+
+            $('#edit_item_pekerjaan').select2({
+                dropdownParent: $('#editLaporanModal'),
+                placeholder: "Pilih Pekerjaan",
+                allowClear: true,
+                width: "100%"
+            });
+
             $(document).on('click', '.edit-btn', function () {
                 let id = $(this).data('id');
                 let editUrl = editUrlTemplate.replace(':id', id);
@@ -609,7 +649,7 @@
                         const url = `/storage/${laporan.bukti}`;
 
                         if (['jpg', 'jpeg', 'png'].includes(ekstensi)) {
-                            $('#preview_bukti').html(`<img src="${url}" width="60">`);
+                            $('#preview_bukti').html(`<img src="${url}" width="360">`);
                         } else if (ekstensi === 'pdf') {
                             $('#preview_bukti').html(`<a href="${url}" target="_blank">Lihat Bukti (PDF)</a>`);
                         } else {
@@ -623,8 +663,21 @@
                 });
             });
 
-            $('#formEditLaporan').on('submit', function (e) {
+            function clearEditSignature() {
+                editSignaturePad.clear();
+                $("#paraf_signature_edit").val('');
+            }
+
+            $('#formEditLaporan')
+            .off('submit') // Pastikan tidak tumpuk
+            .on('submit', function (e) {
                 e.preventDefault();
+
+                // ambil signature
+                if (!editSignaturePad.isEmpty()) {
+                    const dataUrl = editSignaturePad.toDataURL();
+                    $('#paraf_signature_edit').val(dataUrl);
+                }
 
                 const form = this;
                 const formData = new FormData(form);
@@ -658,6 +711,15 @@
                     }
                 });
             });
+
+            $('#editLaporanModal').on('shown.bs.modal', function () {
+                resizeCanvas(editCanvas, editSignaturePad);
+            });
+
+            window.clearEditSignature = function () {
+                editSignaturePad.clear();
+                $("#paraf_signature_edit").val('');
+            }
         });
     </script>
 </x-default-layout>
