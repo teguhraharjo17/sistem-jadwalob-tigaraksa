@@ -1,6 +1,15 @@
 <!--begin::Footer-->
 <div class="app-sidebar-footer flex-column-auto pt-2 pb-6 px-6" id="kt_app_sidebar_footer">
-	<a href="https://preview.keenthemes.com/html/metronic/docs" class="btn btn-flex flex-center btn-custom btn-primary overflow-hidden text-nowrap px-0 h-40px w-100" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss-="click" title="200+ in-house components and 3rd-party plugins">
-	<span class="btn-label">Docs & Components</span>{!! getIcon('document', 'btn-icon fs-2 m-0') !!}</a>
+
+    <!--begin::Separator (garis putus-putus)-->
+    <div class="my-4" style="border-top: 1px dashed #ccc;"></div>
+    <!--end::Separator-->
+
+    <!--begin::Brand-->
+    <div class="d-flex align-items-center justify-content-center">
+        <img src="{{ asset('assets/media/logos/logo_mileniagroup_small.svg') }}" alt="Milenia Logo" class="h-30px me-2">
+    </div>
+    <!--end::Brand-->
+
 </div>
-<!--end::Footer-->
+<!--end::Footer-->
