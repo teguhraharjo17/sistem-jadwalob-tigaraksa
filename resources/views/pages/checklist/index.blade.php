@@ -80,7 +80,16 @@
                                     <td style="display:none">{{ $area }}</td>
                                     <td class="text-center nomor-column">{{ $loop->iteration }}</td>
                                     <td class="text-start pekerjaan-column">{{ $item->pekerjaan }}</td>
-                                    <td class="text-start periodic-column">{{ $item->periodic_cleaning }}</td>
+                                    <td class="text-start periodic-column">
+                                        {{ $item->frequency_count }}x
+                                        @if($item->frequency_unit === 'per_x_hari')
+                                            per {{ $item->frequency_interval }} hari
+                                        @elseif($item->frequency_unit === 'per_hari')
+                                            per hari
+                                        @elseif($item->frequency_unit === 'per_minggu')
+                                            per minggu
+                                        @endif
+                                    </td>
 
                                     @for ($i = 1; $i <= $daysInMonth; $i++)
                                         @php
@@ -93,8 +102,16 @@
                                             $statusSiang = ($statusData[$keySiang] ?? 0) && ($parafStatuses[$keySiang] ?? 0);
                                         @endphp
 
-                                        <td class="{{ $statusPagi ? 'bg-success text-white' : '' }}"></td>
-                                        <td class="{{ $statusSiang ? 'bg-success text-white' : '' }}"></td>
+                                        <td class="
+                                            @if (array_key_exists($keyPagi, $statusData))
+                                                {{ isset($parafStatuses[$keyPagi]) ? 'bg-success text-white' : 'bg-primary text-white' }}
+                                            @endif
+                                        "></td>
+                                        <td class="
+                                            @if (array_key_exists($keySiang, $statusData))
+                                                {{ isset($parafStatuses[$keySiang]) ? 'bg-success text-white' : 'bg-primary text-white' }}
+                                            @endif
+                                        "></td>
                                     @endfor
 
                                     <td class="text-start keterangan-column">{{ $item->keterangan }}</td>
@@ -135,8 +152,33 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="periodic" class="form-label">Periodic Cleaning</label>
-                                <input type="text" class="form-control" id="periodic" name="periodic" required>
+                                <label for="frequency_count" class="form-label">Periode Pekerjaan</label>
+                                <div class="row g-2">
+                                    <div class="col-md-4">
+                                        <input type="number" class="form-control" name="frequency_count" min="1" max="2" placeholder="Contoh: 1" required>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <select name="frequency_unit" class="form-select" required>
+                                            <option value="" disabled selected>Pilih Satuan</option>
+                                            <option value="per_hari">x per Hari</option>
+                                            <option value="per_x_hari">x per X Hari</option>
+                                            <option value="per_minggu">x per Minggu</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <input type="number" class="form-control" name="frequency_interval" min="1" placeholder="Isi jika X Hari (cth: 2)">
+                                    </div>
+                                </div>
+                                <small class="text-muted d-block mt-1">Contoh: 2x per hari = Isi <b>2</b> dan pilih <b>per Hari</b>.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="default_shift" class="form-label">Default Shift (Jika hanya 1x per Hari)</label>
+                                <select name="default_shift" class="form-select">
+                                    <option value="Pagi">Pagi</option>
+                                    <option value="Siang">Siang</option>
+                                </select>
+                                <small class="text-muted">Digunakan saat frekuensi = 1x per hari untuk menentukan shift mana yang dijadwalkan.</small>
                             </div>
 
                             <div class="row">

@@ -39,7 +39,6 @@ class LaporanHarianController extends Controller
         ));
     }
 
-
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -55,26 +54,39 @@ class LaporanHarianController extends Controller
             'paraf' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
         ]);
 
+        // Validasi jam selesai tidak lebih awal dari jam mulai
+        if ($validated['jam_selesai'] < $validated['jam_mulai']) {
+            return back()->withErrors([
+                'jam_selesai' => 'Jam selesai tidak boleh lebih awal dari jam mulai.'
+            ])->withInput();
+        }
+
+        // Cek apakah tanggal dan shift ini memang dijadwalkan
+        $checklist = Checklist::findOrFail($validated['item_pekerjaan']);
+        $statusAda = ChecklistStatus::where('checklist_id', $checklist->id)
+            ->where('tanggal', $validated['tanggal'])
+            ->where('shift', $validated['shift'])
+            ->exists();
+
+        if (!$statusAda) {
+            return back()->withErrors([
+                'tanggal' => 'Pekerjaan ini tidak dijadwalkan pada tanggal dan shift tersebut.'
+            ])->withInput();
+        }
+
+        // Upload file paraf
         $parafPath = null;
         if ($request->hasFile('paraf')) {
             $parafPath = $request->file('paraf')->store('paraf_approve', 'public');
         }
 
-        if ($validated['jam_selesai'] < $validated['jam_mulai']) {
-            $error = ['jam_selesai' => ['Jam selesai tidak boleh lebih awal dari jam mulai.']];
-
-            if ($request->ajax()) {
-                return response()->json(['errors' => $error], 422);
-            }
-
-            return back()->withErrors($error)->withInput();
-        }
-
+        // Upload bukti kerja
         $buktiPath = null;
         if ($request->hasFile('bukti')) {
             $buktiPath = $request->file('bukti')->store('bukti_laporan', 'public');
         }
 
+        // Simpan laporan
         LaporanHarian::create([
             'tanggal' => $validated['tanggal'],
             'shift' => $validated['shift'],
@@ -88,6 +100,7 @@ class LaporanHarianController extends Controller
             'paraf' => $parafPath,
         ]);
 
+        // Update status checklist
         ChecklistStatus::updateOrCreate(
             [
                 'checklist_id' => $validated['item_pekerjaan'],
@@ -131,32 +144,46 @@ class LaporanHarianController extends Controller
         ]);
 
         if ($validated['jam_selesai'] < $validated['jam_mulai']) {
-            $error = ['jam_selesai' => ['Jam selesai tidak boleh lebih awal dari jam mulai.']];
-
-            if ($request->ajax()) {
-                return response()->json(['errors' => $error], 422);
-            }
-
-            return back()->withErrors($error)->withInput();
+            return back()->withErrors([
+                'jam_selesai' => 'Jam selesai tidak boleh lebih awal dari jam mulai.'
+            ])->withInput();
         }
 
+        // Validasi: hanya bisa update jika tanggal & shift sesuai dengan jadwal checklist
+        $checklist = Checklist::findOrFail($validated['item_pekerjaan']);
+        $statusAda = ChecklistStatus::where('checklist_id', $checklist->id)
+            ->where('tanggal', $validated['tanggal'])
+            ->where('shift', $validated['shift'])
+            ->exists();
+
+        if (!$statusAda) {
+            return back()->withErrors([
+                'tanggal' => 'Pekerjaan ini tidak dijadwalkan pada tanggal dan shift tersebut.'
+            ])->withInput();
+        }
+
+        // Paraf (via gambar atau signature)
         $parafPath = $laporan->paraf;
         if ($request->filled('paraf_signature_edit')) {
             if ($parafPath) {
                 Storage::disk('public')->delete($parafPath);
             }
 
-            $base64 = $request->input('paraf_signature_edit');
-            $base64 = str_replace('data:image/png;base64,', '', $base64);
-            $base64 = str_replace(' ', '+', $base64);
-
+            $base64 = str_replace(['data:image/png;base64,', ' '], ['', '+'], $request->input('paraf_signature_edit'));
             $filename = 'paraf_' . Str::random(10) . '.png';
             $path = "paraf_approve/{$filename}";
-
             Storage::disk('public')->put($path, base64_decode($base64));
             $parafPath = $path;
         }
 
+        if ($request->hasFile('paraf')) {
+            if ($parafPath) {
+                Storage::disk('public')->delete($parafPath);
+            }
+            $parafPath = $request->file('paraf')->store('paraf_approve', 'public');
+        }
+
+        // Bukti
         $buktiPath = $laporan->bukti;
         if ($request->hasFile('bukti')) {
             if ($buktiPath) {
@@ -165,6 +192,7 @@ class LaporanHarianController extends Controller
             $buktiPath = $request->file('bukti')->store('bukti_laporan', 'public');
         }
 
+        // Update laporan
         $laporan->update([
             'tanggal' => $validated['tanggal'],
             'shift' => $validated['shift'],
@@ -185,4 +213,34 @@ class LaporanHarianController extends Controller
         return redirect()->route('laporanharian.index')->with('success', 'Laporan berhasil diperbarui.');
     }
 
+    public function getPekerjaanTersedia(Request $request)
+    {
+        $tanggal = $request->input('tanggal');
+        $shift = $request->input('shift');
+
+        if (!$tanggal || !$shift) {
+            return response()->json([]);
+        }
+
+        // Ambil semua checklist_id yang valid dan status-nya 0 di tanggal dan shift ini
+        $checklistIds = ChecklistStatus::where('tanggal', $tanggal)
+            ->where('shift', $shift)
+            ->where('status', 0) // hanya yang belum dikerjakan
+            ->pluck('checklist_id');
+
+        // Filter checklist hanya yang benar-benar dijadwalkan untuk shift ini
+        $pekerjaanList = Checklist::whereIn('id', $checklistIds)
+            ->where(function ($query) use ($shift) {
+                $query->where('frequency_count', 2)
+                    ->orWhere(function ($q) use ($shift) {
+                        $q->where('frequency_count', 1)
+                            ->where('default_shift', $shift);
+                    });
+            })
+            ->select('id', 'pekerjaan')
+            ->orderBy('pekerjaan')
+            ->get();
+
+        return response()->json($pekerjaanList);
+    }
 }

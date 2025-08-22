@@ -553,6 +553,43 @@
             signaturePadInstance.clear();
         }
 
+        function loadPekerjaanList(tanggal, shift) {
+            if (!tanggal || !shift) return;
+
+            $.get(`{{ route('laporanharian.pekerjaan-tersedia') }}`, { tanggal, shift }, function (data) {
+                let $pekerjaanSelect = $('#item_pekerjaan');
+                $pekerjaanSelect.empty().append('<option value="" disabled selected>Pilih Item Pekerjaan</option>');
+
+                if (data.length === 0) {
+                    $pekerjaanSelect.append('<option value="" disabled>Tidak ada pekerjaan</option>');
+                } else {
+                    data.forEach(item => {
+                        $pekerjaanSelect.append(`<option value="${item.id}">${item.pekerjaan}</option>`);
+                    });
+                }
+
+                $pekerjaanSelect.trigger('change');
+            });
+        }
+
+        // Trigger saat tanggal atau shift berubah
+        $('#tanggal').on('change', function () {
+            const tanggal = $(this).val();
+            const shift = $('input[name="shift"]:checked').val();
+            loadPekerjaanList(tanggal, shift);
+        });
+
+        $('input[name="shift"]').on('change', function () {
+            const shift = $(this).val();
+            const tanggal = $('#tanggal').val();
+            loadPekerjaanList(tanggal, shift);
+        });
+
+        // Optional: saat modal dibuka, kosongkan pekerjaan
+        $('#addLaporanHarian').on('show.bs.modal', function () {
+            $('#item_pekerjaan').empty().append('<option value="" disabled selected>Silakan pilih tanggal dan shift terlebih dahulu</option>');
+        });
+
         $(document).ready(function () {
             const editCanvas = document.getElementById("editSignatureCanvas");
             editSignaturePad = new SignaturePad(editCanvas);

@@ -16,5 +16,14 @@ class Checklist extends Model
         'bulan',
         'tahun',
         'keterangan',
+        'frequency_count',
+        'frequency_unit',
+        'frequency_interval',
+        'default_shift',
+    ];
+
+    protected $casts = [
+        'frequency_count' => 'integer',
+        'frequency_interval' => 'integer',
     ];
 }

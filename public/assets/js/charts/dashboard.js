@@ -32,8 +32,8 @@ document.addEventListener('DOMContentLoaded', function () {
             data: {
                 labels: data.checklist_progress.map(i => i.tanggal),
                 datasets: [
-                    { label: 'Di Approve', data: data.checklist_progress.map(i => i.selesai), backgroundColor: '#0066ffff' },
-                    { label: 'Total Selesai', data: data.checklist_progress.map(i => i.total), backgroundColor: '#56c75fff' }
+                    { label: 'Di Approve (Selesai)', data: data.checklist_progress.map(i => i.selesai), backgroundColor: '#0066ffff' },
+                    { label: 'Total Pekerjaan', data: data.checklist_progress.map(i => i.total), backgroundColor: '#56c75fff' }
                 ]
             },
             options: {

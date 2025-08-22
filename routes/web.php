@@ -51,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [LaporanHarianController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [LaporanHarianController::class, 'edit'])->name('edit');
         Route::put('/{id}', [LaporanHarianController::class, 'update'])->name('update');
+        Route::get('/pekerjaan-tersedia', [LaporanHarianController::class, 'getPekerjaanTersedia'])->name('pekerjaan-tersedia');
     });
 
     // ===========================
