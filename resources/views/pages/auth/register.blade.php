@@ -1,7 +1,7 @@
 <x-auth-layout>
     @section('title', 'Register')
     <!--begin::Form-->
-    <form class="form w-100" method="POST" novalidate="novalidate" id="kt_sign_up_form" data-kt-redirect-url="/login" action="{{ route('admin.register') }}">
+    <form class="form w-100" method="POST" novalidate="novalidate" id="kt_sign_up_form" data-kt-redirect-url="{{ route('login') }}" action="{{ route('admin.register') }}">
         @csrf
         <!--begin::Heading-->
         <div class="text-center mb-11">
@@ -100,7 +100,7 @@
         <div class="text-gray-500 text-center fw-semibold fs-6">
             Already have an Account?
 
-            <a href="/login" class="link-primary fw-semibold">
+            <a href="{{ route('login') }}" class="link-primary fw-semibold">Sign in</a>
                 Sign in
             </a>
         </div>
