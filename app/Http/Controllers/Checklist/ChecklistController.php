@@ -177,5 +177,41 @@ class ChecklistController extends Controller
         }
     }
 
+    public function edit($id)
+    {
+        $checklist = Checklist::findOrFail($id);
+        $areas = Checklist::select('area')->distinct()->pluck('area');
+
+        return response()->json([
+            'checklist' => $checklist,
+            'areas' => $areas
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'area' => 'required|string|max:255',
+            'pekerjaan' => 'required|string|max:255',
+            'bulan' => 'required|integer|min:1|max:12',
+            'tahun' => 'required|integer|min:2000',
+            'keterangan' => 'nullable|string',
+            'frequency_count' => 'required|integer|min:1',
+            'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu',
+            'frequency_interval' => 'nullable|integer|min:1',
+            'default_shift' => 'nullable|in:Pagi,Siang',
+        ]);
+
+        $checklist = Checklist::findOrFail($id);
+
+        ChecklistStatus::where('checklist_id', $checklist->id)->delete();
+
+        $checklist->update($validated);
+
+        $this->generateSchedule($checklist);
+
+        return response()->json(['success' => true, 'message' => 'Checklist berhasil diperbarui.']);
+    }
 
 }
+

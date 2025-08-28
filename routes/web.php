@@ -41,6 +41,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('checklist')->name('checklist.')->group(function () {
         Route::get('/', [ChecklistController::class, 'index'])->name('index');
         Route::post('/', [ChecklistController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [ChecklistController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [ChecklistController::class, 'update'])->name('update');
     });
 
     // ===========================
