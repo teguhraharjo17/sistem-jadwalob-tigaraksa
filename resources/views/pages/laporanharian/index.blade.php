@@ -64,7 +64,7 @@
                                 <td class="text-start">{{ $laporan->area ?? '-' }}</td>
                                 <td class="text-center">
                                     @if ($laporan->bukti)
-                                        <a href="{{ asset('storage/'.$laporan->bukti) }}" target="_blank">Lihat</a>
+                                        <a href="{{ asset('public/storage/'.$laporan->bukti) }}" target="_blank">Lihat</a>
                                     @else
                                         -
                                     @endif
@@ -73,7 +73,7 @@
                                 <td class="text-start">{{ $laporan->mengetahui ?? '-' }}</td>
                                 <td class="text-center">
                                     @if ($laporan->paraf)
-                                        <img src="{{ asset('storage/'.$laporan->paraf) }}" alt="Paraf" class="img-paraf-preview">
+                                        <img src="{{ asset('public/storage/'.$laporan->paraf) }}" alt="Paraf" class="img-paraf-preview">
                                     @else
                                         -
                                     @endif
@@ -152,7 +152,12 @@
 
                             <div class="mb-3">
                                 <label for="area" class="form-label">Area</label>
-                                <input type="text" class="form-control" id="area" name="area" required>
+                                <select class="form-select" id="area" name="area" required>
+                                    <option value="" disabled selected>Pilih Area</option>
+                                    @foreach ($areaList as $area)
+                                        <option value="{{ $area }}">{{ $area }}</option>
+                                    @endforeach
+                                </select>
                             </div>
 
                             <div class="mb-3">
@@ -223,7 +228,9 @@
 
                             <div class="mb-3">
                                 <label for="edit_area" class="form-label">Area</label>
-                                <input type="text" class="form-control" id="edit_area" name="area" required>
+                                <select class="form-select" id="edit_area" name="area" required>
+                                    <option value="" disabled>Pilih Area</option>
+                                </select>
                             </div>
 
                             <div class="mb-3">
@@ -651,6 +658,20 @@
                 width: "100%"
             });
 
+            $('#edit_area').select2({
+                dropdownParent: $('#editLaporanModal'),
+                placeholder: "Pilih Area",
+                allowClear: true,
+                width: "100%"
+            });
+
+            $('#area').select2({
+                dropdownParent: $('#addLaporanHarian'),
+                placeholder: "Pilih Area",
+                allowClear: true,
+                width: "100%"
+            });
+
             $(document).on('click', '.edit-btn', function () {
                 let id = $(this).data('id');
                 let editUrl = editUrlTemplate.replace(':id', id);
@@ -664,7 +685,12 @@
                     $(`#edit_shift${laporan.shift}`).prop('checked', true);
                     $('#edit_jam_mulai').val(laporan.jam_mulai);
                     $('#edit_jam_selesai').val(laporan.jam_selesai);
-                    $('#edit_area').val(laporan.area);
+                    let areaOptions = '<option value="" disabled>Pilih Area</option>';
+                    data.areaList.forEach(function(area) {
+                        const selected = (laporan.area === area) ? 'selected' : '';
+                        areaOptions += `<option value="${area}" ${selected}>${area}</option>`;
+                    });
+                    $('#edit_area').html(areaOptions);
                     $('#edit_hasil_pekerjaan').val(laporan.hasil_pekerjaan ?? '');
                     $('#edit_mengetahui').val(laporan.mengetahui ?? '');
 
@@ -676,14 +702,14 @@
                     $('#edit_item_pekerjaan').html(pekerjaanOptions);
 
                     if (laporan.paraf) {
-                        $('#preview_paraf').html(`<img src="/storage/${laporan.paraf}" width="60">`);
+                        $('#preview_paraf').html(`<img src="public/storage/${laporan.paraf}" width="60">`);
                     } else {
                         $('#preview_paraf').html('');
                     }
 
                     if (laporan.bukti) {
                         const ekstensi = laporan.bukti.split('.').pop().toLowerCase();
-                        const url = `/storage/${laporan.bukti}`;
+                        const url = `public/storage/${laporan.bukti}`;
 
                         if (['jpg', 'jpeg', 'png'].includes(ekstensi)) {
                             $('#preview_bukti').html(`<img src="${url}" width="360">`);

@@ -31,12 +31,9 @@ class LaporanHarianController extends Controller
             ->get();
 
         $now = Carbon::createFromDate($tahun, $bulan, 1);
+        $areaList = Checklist::select('area')->distinct()->pluck('area');
 
-        return view('pages.laporanharian.index', compact(
-            'now',
-            'pekerjaanList',
-            'laporanList'
-        ));
+        return view('pages.laporanharian.index', compact('now', 'pekerjaanList', 'laporanList', 'areaList'));
     }
 
     public function store(Request $request)
@@ -119,10 +116,12 @@ class LaporanHarianController extends Controller
     {
         $laporan = LaporanHarian::findOrFail($id);
         $pekerjaanList = Checklist::select('id', 'pekerjaan')->orderBy('pekerjaan')->get();
+        $areaList = Checklist::select('area')->distinct()->pluck('area');
 
         return response()->json([
             'laporan' => $laporan,
-            'pekerjaanList' => $pekerjaanList
+            'pekerjaanList' => $pekerjaanList,
+            'areaList' => $areaList
         ]);
     }
 
