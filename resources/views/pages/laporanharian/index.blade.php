@@ -95,15 +95,34 @@
                 </table>
                 @if(count($jadwalHariIniPagi) || count($jadwalHariIniSiang))
                     <div class="alert alert-info mt-4">
-                        <h6 class="fw-bold">Jadwal Pekerjaan Hari Ini ({{ \Carbon\Carbon::today()->translatedFormat('l, d M Y') }})</h6>
-                        <ul>
-                            <li><strong>Shift Pagi:</strong>
-                                {{ count($jadwalHariIniPagi) ? implode(', ', $jadwalHariIniPagi) : 'Tidak ada jadwal.' }}
-                            </li>
-                            <li><strong>Shift Siang:</strong>
-                                {{ count($jadwalHariIniSiang) ? implode(', ', $jadwalHariIniSiang) : 'Tidak ada jadwal.' }}
-                            </li>
-                        </ul>
+                        <h6 class="fw-bold">
+                            <i class="fas fa-calendar-day text-primary"></i>
+                            Jadwal Pekerjaan Hari Ini ({{ \Carbon\Carbon::today()->translatedFormat('l, d M Y') }})
+                        </h6>
+
+                        <div class="ms-3 mb-2">
+                            <strong>Shift Pagi:</strong>
+                            @if(count($jadwalHariIniPagi))
+                                <ul class="mb-2">
+                                    @foreach ($jadwalHariIniPagi as $item)
+                                        <li>{{ $item }}</li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <p class="mb-2">Tidak ada jadwal.</p>
+                            @endif
+
+                            <strong>Shift Siang:</strong>
+                            @if(count($jadwalHariIniSiang))
+                                <ul class="mb-0">
+                                    @foreach ($jadwalHariIniSiang as $item)
+                                        <li>{{ $item }}</li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                <p class="mb-0">Tidak ada jadwal.</p>
+                            @endif
+                        </div>
                     </div>
                 @endif
             </div>
