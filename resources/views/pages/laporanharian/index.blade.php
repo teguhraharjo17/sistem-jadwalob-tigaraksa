@@ -105,7 +105,12 @@
                             @if(count($jadwalHariIniPagi))
                                 <ul class="mb-2">
                                     @foreach ($jadwalHariIniPagi as $item)
-                                        <li>{{ $item }}</li>
+                                        <li>
+                                            @if($item['status'] == 1)
+                                                ✅
+                                            @endif
+                                            {{ $item['pekerjaan'] }}
+                                        </li>
                                     @endforeach
                                 </ul>
                             @else
@@ -116,7 +121,12 @@
                             @if(count($jadwalHariIniSiang))
                                 <ul class="mb-0">
                                     @foreach ($jadwalHariIniSiang as $item)
-                                        <li>{{ $item }}</li>
+                                        <li>
+                                            @if($item['status'] == 1)
+                                                ✅
+                                            @endif
+                                            {{ $item['pekerjaan'] }}
+                                        </li>
                                     @endforeach
                                 </ul>
                             @else
