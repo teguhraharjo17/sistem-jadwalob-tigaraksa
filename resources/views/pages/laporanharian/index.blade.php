@@ -93,6 +93,19 @@
                         @endforelse
                     </tbody>
                 </table>
+                @if(count($jadwalHariIniPagi) || count($jadwalHariIniSiang))
+                    <div class="alert alert-info mt-4">
+                        <h6 class="fw-bold">Jadwal Pekerjaan Hari Ini ({{ \Carbon\Carbon::today()->translatedFormat('l, d M Y') }})</h6>
+                        <ul>
+                            <li><strong>Shift Pagi:</strong>
+                                {{ count($jadwalHariIniPagi) ? implode(', ', $jadwalHariIniPagi) : 'Tidak ada jadwal.' }}
+                            </li>
+                            <li><strong>Shift Siang:</strong>
+                                {{ count($jadwalHariIniSiang) ? implode(', ', $jadwalHariIniSiang) : 'Tidak ada jadwal.' }}
+                            </li>
+                        </ul>
+                    </div>
+                @endif
             </div>
         </div>
 

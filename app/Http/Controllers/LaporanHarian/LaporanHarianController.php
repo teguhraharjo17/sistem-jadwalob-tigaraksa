@@ -32,8 +32,30 @@ class LaporanHarianController extends Controller
 
         $now = Carbon::createFromDate($tahun, $bulan, 1);
         $areaList = Checklist::select('area')->distinct()->pluck('area');
+        $today = Carbon::today();
 
-        return view('pages.laporanharian.index', compact('now', 'pekerjaanList', 'laporanList', 'areaList'));
+        $jadwalHariIniPagi = ChecklistStatus::with('checklist')
+            ->whereDate('tanggal', $today)
+            ->where('shift', 'Pagi')
+            ->where('status', 0)
+            ->get()
+            ->map(fn ($status) => $status->checklist->pekerjaan)
+            ->filter()
+            ->toArray();
+
+        $jadwalHariIniSiang = ChecklistStatus::with('checklist')
+            ->whereDate('tanggal', $today)
+            ->where('shift', 'Siang')
+            ->where('status', 0)
+            ->get()
+            ->map(fn ($status) => $status->checklist->pekerjaan)
+            ->filter()
+            ->toArray();
+
+        return view('pages.laporanharian.index', compact(
+            'now', 'pekerjaanList', 'laporanList', 'areaList',
+            'jadwalHariIniPagi', 'jadwalHariIniSiang'
+        ));
     }
 
     public function store(Request $request)

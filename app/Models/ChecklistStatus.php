@@ -17,4 +17,9 @@ class ChecklistStatus extends Model
         'shift',
         'status',
     ];
+
+    public function checklist()
+    {
+        return $this->belongsTo(Checklist::class, 'checklist_id');
+    }
 }
