@@ -281,27 +281,30 @@
                                 <div id="preview_bukti" class="mt-2"></div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="edit_hasil_pekerjaan" class="form-label">Hasil Pekerjaan</label>
-                                <input type="text" class="form-control" id="edit_hasil_pekerjaan" name="hasil_pekerjaan">
-                            </div>
+                            <fieldset class="border p-3 mb-3">
+                                <legend class="w-auto px-2">Kolom Persetujuan</legend>
 
-                            <div class="mb-3">
-                                <label for="edit_mengetahui" class="form-label">Mengetahui</label>
-                                <input type="text" class="form-control" id="edit_mengetahui" name="mengetahui">
-                            </div>
+                                <div class="mb-3">
+                                    <label for="edit_hasil_pekerjaan" class="form-label">Hasil Pekerjaan</label>
+                                    <input type="text" class="form-control" id="edit_hasil_pekerjaan" name="hasil_pekerjaan">
+                                </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Paraf (Upload atau Gambar)</label>
+                                <div class="mb-3">
+                                    <label for="edit_mengetahui" class="form-label">Mengetahui</label>
+                                    <input type="text" class="form-control" id="edit_mengetahui" name="mengetahui">
+                                </div>
 
-                                <input type="file" class="form-control mb-2" id="edit_paraf" name="paraf" accept="image/*">
-                                <div id="preview_paraf" class="mb-2"></div>
+                                <div class="mb-3">
+                                    <label class="form-label">Paraf (Upload atau Gambar)</label>
 
-                                <canvas id="editSignatureCanvas" class="border" style="width: 100%; height: 200px;"></canvas>
-                                <input type="hidden" name="paraf_signature_edit" id="paraf_signature_edit">
-                                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="clearEditSignature()">Hapus</button>
-                            </div>
+                                    <input type="file" class="form-control mb-2" id="edit_paraf" name="paraf" accept="image/*">
+                                    <div id="preview_paraf" class="mb-2"></div>
 
+                                    <canvas id="editSignatureCanvas" class="border" style="width: 100%; height: 200px;"></canvas>
+                                    <input type="hidden" name="paraf_signature_edit" id="paraf_signature_edit">
+                                    <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="clearEditSignature()">Hapus</button>
+                                </div>
+                            </fieldset>
                         </div>
 
                         <div class="modal-footer">
