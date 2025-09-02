@@ -68,7 +68,7 @@ class ChecklistController extends Controller
             'start_date' => 'required|date',
             'keterangan' => 'nullable|string',
             'frequency_count' => 'required|integer|min:1',
-            'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu',
+            'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu,per_bulan',
             'frequency_interval' => 'nullable|integer|min:1',
             'default_shift' => 'nullable|in:Pagi,Siang',
         ]);
@@ -158,6 +158,14 @@ class ChecklistController extends Controller
                     $weekStart->addWeek();
                 }
                 break;
+
+            case 'per_bulan':
+                $targetDate = Carbon::parse($checklist->start_date);
+
+                if ($targetDate->month == $checklist->bulan && $targetDate->year == $checklist->tahun) {
+                    $dates->push($targetDate);
+                }
+                break;
         }
 
         foreach ($dates as $date) {
@@ -210,7 +218,7 @@ class ChecklistController extends Controller
             'start_date' => 'required|date',
             'keterangan' => 'nullable|string',
             'frequency_count' => 'required|integer|min:1',
-            'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu',
+            'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu,per_bulan',
             'frequency_interval' => 'nullable|integer|min:1',
             'default_shift' => 'nullable|in:Pagi,Siang',
         ]);

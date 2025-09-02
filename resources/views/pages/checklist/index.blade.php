@@ -86,9 +86,10 @@
                                             per hari
                                         @elseif($item->frequency_unit === 'per_minggu')
                                             per minggu
+                                        @elseif($item->frequency_unit === 'per_bulan')
+                                            per bulan
                                         @endif
                                     </td>
-
                                     @for ($i = 1; $i <= $daysInMonth; $i++)
                                         @php
                                             $tanggalCell = \Carbon\Carbon::create($tahun, $bulan, $i)->format('Y-m-d');
@@ -173,6 +174,7 @@
                                             <option value="per_hari">x per Hari</option>
                                             <option value="per_x_hari">x per X Hari</option>
                                             <option value="per_minggu">x per Minggu</option>
+                                            <option value="per_bulan">x per Bulan</option>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
@@ -270,6 +272,7 @@
                                             <option value="per_hari">x per Hari</option>
                                             <option value="per_x_hari">x per X Hari</option>
                                             <option value="per_minggu">x per Minggu</option>
+                                            <option value="per_bulan">x per Bulan</option>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
