@@ -138,6 +138,19 @@
                         @endforelse
                     </tbody>
                 </table>
+                @if (!empty($holidayDetails))
+                    <div class="mt-3 p-3 bg-light border rounded">
+                        <h6 class="fw-bold text-danger">Catatan Hari Libur Bulan Ini:</h6>
+                        <ul class="mb-0">
+                            @foreach ($holidayDetails as $libur)
+                                <li>
+                                    <span class="fw-bold">{{ $libur['tanggal'] }}</span> 
+                                    - {{ $libur['jenis_libur'] }} ({{ $libur['keterangan'] }})
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
             </div>
         </div>
         <!-- Modal Tambah Jadwal OB -->
@@ -345,7 +358,7 @@
             font-weight: bold;
             box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
         }
-        
+
         .hari-libur {
             background-color: #ffe5e5 !important;
             color: #d10000 !important;

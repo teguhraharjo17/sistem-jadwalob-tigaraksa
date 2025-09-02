@@ -50,12 +50,31 @@ class ChecklistController extends Controller
                 return [$key => 1];
             })->toArray();
 
-        // 🔹 Ambil tanggal libur dari API
         $holidayResponse = Http::get('http://192.168.0.8:8000/api/libur');
-        $holidayDates = collect($holidayResponse->json())
-            ->pluck('tanggal')
-            ->map(fn($t) => \Carbon\Carbon::parse($t)->format('Y-m-d'))
-            ->toArray();
+
+        $holidayDates = [];
+        $holidayDetails = [];
+
+        if ($holidayResponse->successful()) {
+            $holidayData = collect($holidayResponse->json());
+
+            $holidayDates = $holidayData
+                ->pluck('tanggal')
+                ->map(fn($t) => \Carbon\Carbon::parse($t)->format('Y-m-d'))
+                ->toArray();
+
+            $holidayDetails = $holidayData->filter(function ($item) use ($bulan, $tahun) {
+                $date = \Carbon\Carbon::parse($item['tanggal']);
+                return $date->month == $bulan && $date->year == $tahun;
+            })->sortBy('tanggal')->map(function ($item) {
+                return [
+                    'tanggal' => \Carbon\Carbon::parse($item['tanggal'])->translatedFormat('d F Y'),
+                    'keterangan' => $item['keterangan'],
+                    'jenis_libur' => $item['jenis_libur'],
+                ];
+            })->values()->toArray();
+
+        }
 
         return view('pages.checklist.index', compact(
             'checklists',
@@ -63,7 +82,8 @@ class ChecklistController extends Controller
             'areas',
             'statusData',
             'parafStatuses',
-            'holidayDates'
+            'holidayDates',
+            'holidayDetails'
         ));
     }
 
