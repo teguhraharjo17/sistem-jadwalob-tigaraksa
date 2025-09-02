@@ -10,6 +10,7 @@ use Illuminate\Support\Carbon;
 use \Illuminate\Http\Request;
 use App\Exports\ChecklistExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\Http;
 
 class ChecklistController extends Controller
 {
@@ -17,7 +18,7 @@ class ChecklistController extends Controller
     {
         $bulan = $request->get('bulan', now()->month);
         $tahun = $request->get('tahun', now()->year);
-        $now = \Carbon\Carbon::create($tahun, $bulan, 1);
+        $now   = \Carbon\Carbon::create($tahun, $bulan, 1);
 
         $checklists = Checklist::where('bulan', $bulan)
             ->where('tahun', $tahun)
@@ -49,12 +50,20 @@ class ChecklistController extends Controller
                 return [$key => 1];
             })->toArray();
 
+        // 🔹 Ambil tanggal libur dari API
+        $holidayResponse = Http::get('http://192.168.0.8:8000/api/libur');
+        $holidayDates = collect($holidayResponse->json())
+            ->pluck('tanggal')
+            ->map(fn($t) => \Carbon\Carbon::parse($t)->format('Y-m-d'))
+            ->toArray();
+
         return view('pages.checklist.index', compact(
             'checklists',
             'now',
             'areas',
             'statusData',
-            'parafStatuses'
+            'parafStatuses',
+            'holidayDates'
         ));
     }
 
@@ -106,15 +115,21 @@ class ChecklistController extends Controller
     private function generateSchedule(Checklist $checklist)
     {
         $dates = collect();
-
         $start = Carbon::parse($checklist->start_date);
         $end   = Carbon::create($checklist->tahun, $checklist->bulan)->endOfMonth();
+
+        // 🔹 Ambil libur dari API
+        $holidayResponse = Http::get('http://192.168.0.8:8000/api/libur');
+        $holidayDates = collect($holidayResponse->json())
+            ->pluck('tanggal')
+            ->map(fn($t) => Carbon::parse($t)->format('Y-m-d'))
+            ->toArray();
 
         switch ($checklist->frequency_unit) {
             case 'per_hari':
                 for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
-                    if ($date->isWeekend()) {
-                        continue;
+                    if ($date->isWeekend() || in_array($date->format('Y-m-d'), $holidayDates)) {
+                        continue; // skip weekend & libur
                     }
                     $dates->push($date->copy());
                 }
@@ -125,7 +140,7 @@ class ChecklistController extends Controller
                 $date = $start->copy();
 
                 while ($date->lte($end)) {
-                    if (!$date->isWeekend()) {
+                    if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
                         $dates->push($date->copy());
                     }
 
@@ -133,7 +148,7 @@ class ChecklistController extends Controller
                     while ($daysAdded < $interval) {
                         $date->addDay();
 
-                        if (!$date->isWeekend()) {
+                        if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
                             $daysAdded++;
                         }
                     }
@@ -145,13 +160,11 @@ class ChecklistController extends Controller
                 while ($weekStart->lte($end)) {
                     $targetDate = $weekStart->copy()->startOfWeek(Carbon::MONDAY);
 
-                    if ($targetDate->isSaturday()) {
-                        $targetDate->subDay();
-                    } elseif ($targetDate->isSunday()) {
-                        $targetDate->subDays(2);
-                    }
+                    if ($targetDate->isSaturday()) $targetDate->subDay();
+                    elseif ($targetDate->isSunday()) $targetDate->subDays(2);
 
-                    if ($targetDate->month === $start->month) {
+                    if ($targetDate->month === $start->month &&
+                        !in_array($targetDate->format('Y-m-d'), $holidayDates)) {
                         $dates->push($targetDate);
                     }
 
@@ -161,8 +174,9 @@ class ChecklistController extends Controller
 
             case 'per_bulan':
                 $targetDate = Carbon::parse($checklist->start_date);
-
-                if ($targetDate->month == $checklist->bulan && $targetDate->year == $checklist->tahun) {
+                if ($targetDate->month == $checklist->bulan &&
+                    $targetDate->year == $checklist->tahun &&
+                    !in_array($targetDate->format('Y-m-d'), $holidayDates)) {
                     $dates->push($targetDate);
                 }
                 break;
@@ -172,17 +186,13 @@ class ChecklistController extends Controller
             $shifts = [];
 
             if ($checklist->frequency_unit === 'per_hari') {
-                if ($checklist->frequency_count == 1) {
-                    $shifts[] = $checklist->default_shift ?? 'Pagi';
-                } else {
-                    $shifts = ['Pagi', 'Siang'];
-                }
+                $shifts = $checklist->frequency_count == 1
+                    ? [$checklist->default_shift ?? 'Pagi']
+                    : ['Pagi', 'Siang'];
             } else {
-                if ($checklist->frequency_count == 2) {
-                    $shifts = ['Pagi', 'Siang'];
-                } else {
-                    $shifts[] = $checklist->default_shift ?? 'Pagi';
-                }
+                $shifts = $checklist->frequency_count == 2
+                    ? ['Pagi', 'Siang']
+                    : [$checklist->default_shift ?? 'Pagi'];
             }
 
             foreach ($shifts as $shift) {

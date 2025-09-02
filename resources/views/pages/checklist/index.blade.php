@@ -45,10 +45,14 @@
                             <th class="text-center">Periodic Cleaning</th>
                             @for ($i = 1; $i <= $daysInMonth; $i++)
                                 @php
+                                    $tanggalCell = \Carbon\Carbon::create($tahun, $bulan, $i)->format('Y-m-d');
                                     $day = \Carbon\Carbon::create($tahun, $bulan, $i)->format('l');
                                     $isWeekend = in_array($day, ['Saturday', 'Sunday']);
+                                    $isHoliday = in_array($tanggalCell, $holidayDates ?? []);
                                 @endphp
-                                <th class="text-center {{ $isWeekend ? 'text-danger fw-bold' : '' }}" colspan="2">{{ $i }}</th>
+                                <th class="text-center {{ ($isWeekend || $isHoliday) ? 'text-danger fw-bold hari-libur' : '' }}" colspan="2">
+                                    {{ $i }}
+                                </th>
                             @endfor
                             <th class="text-center">Keterangan</th>
                             <th class="text-center">Aksi</th>
@@ -60,11 +64,13 @@
                             <th></th>
                             @for ($i = 1; $i <= $daysInMonth; $i++)
                                 @php
+                                    $tanggalCell = \Carbon\Carbon::create($tahun, $bulan, $i)->format('Y-m-d');
                                     $day = \Carbon\Carbon::create($tahun, $bulan, $i)->format('l');
                                     $isWeekend = in_array($day, ['Saturday', 'Sunday']);
+                                    $isHoliday = in_array($tanggalCell, $holidayDates ?? []);
                                 @endphp
-                                <th class="text-center {{ $isWeekend ? 'text-danger' : '' }}">P</th>
-                                <th class="text-center {{ $isWeekend ? 'text-danger' : '' }}">S</th>
+                                <th class="text-center {{ ($isWeekend || $isHoliday) ? 'text-danger hari-libur' : '' }}">P</th>
+                                <th class="text-center {{ ($isWeekend || $isHoliday) ? 'text-danger hari-libur' : '' }}">S</th>
                             @endfor
                             <th></th>
                             <th></th>
@@ -90,9 +96,13 @@
                                             per bulan
                                         @endif
                                     </td>
+
                                     @for ($i = 1; $i <= $daysInMonth; $i++)
                                         @php
                                             $tanggalCell = \Carbon\Carbon::create($tahun, $bulan, $i)->format('Y-m-d');
+                                            $day = \Carbon\Carbon::create($tahun, $bulan, $i)->format('l');
+                                            $isWeekend = in_array($day, ['Saturday', 'Sunday']);
+                                            $isHoliday = in_array($tanggalCell, $holidayDates ?? []);
 
                                             $keyPagi = $item->id . '_' . $tanggalCell . '_Pagi';
                                             $keySiang = $item->id . '_' . $tanggalCell . '_Siang';
@@ -102,11 +112,13 @@
                                         @endphp
 
                                         <td class="
+                                            @if ($isWeekend || $isHoliday) hari-libur @endif
                                             @if (array_key_exists($keyPagi, $statusData))
                                                 {{ isset($parafStatuses[$keyPagi]) ? 'bg-success text-white' : 'bg-primary text-white' }}
                                             @endif
                                         "></td>
                                         <td class="
+                                            @if ($isWeekend || $isHoliday) hari-libur @endif
                                             @if (array_key_exists($keySiang, $statusData))
                                                 {{ isset($parafStatuses[$keySiang]) ? 'bg-success text-white' : 'bg-primary text-white' }}
                                             @endif
@@ -333,6 +345,13 @@
             font-weight: bold;
             box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
         }
+        
+        .hari-libur {
+            background-color: #ffe5e5 !important;
+            color: #d10000 !important;
+            font-weight: bold;
+        }
+
         #tablechecklist tbody tr:hover {
             background-color: #f2f2f2;
             cursor: pointer;
