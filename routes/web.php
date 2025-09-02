@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/', [ChecklistController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [ChecklistController::class, 'edit'])->name('edit');
         Route::put('/{id}', [ChecklistController::class, 'update'])->name('update');
+        Route::get('/export-excel', [ChecklistController::class, 'exportExcel'])->name('exportexcel');
     });
 
     // ===========================

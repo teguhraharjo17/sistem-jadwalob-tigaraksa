@@ -620,7 +620,19 @@
                         extend: 'colvis',
                         text: '<i class="fas fa-columns"></i> Column Visible',
                         className: 'btn custom-button btn-sm me-1',
+                    },
+                    @if(auth()->user()->hasRole('Admin'))
+                    {
+                        text: '<i class="fas fa-file-excel"></i> Export Excel',
+                        className: 'btn custom-button btn-sm me-1',
+                        action: function () {
+                            const bulan = $('#filterBulan').val();
+                            const tahun = $('#filterTahun').val();
+                            const url = `{{ route('checklist.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
+                            window.location.href = url;
+                        }
                     }
+                    @endif
                 ],
                 language: {
                     search: "_INPUT_",

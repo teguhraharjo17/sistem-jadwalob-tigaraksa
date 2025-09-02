@@ -8,6 +8,8 @@ use App\Models\ChecklistStatus;
 use App\Models\LaporanHarian;
 use Illuminate\Support\Carbon;
 use \Illuminate\Http\Request;
+use App\Exports\ChecklistExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ChecklistController extends Controller
 {
@@ -213,5 +215,14 @@ class ChecklistController extends Controller
         return response()->json(['success' => true, 'message' => 'Checklist berhasil diperbarui.']);
     }
 
+    public function exportExcel(Request $request)
+    {
+        $bulan = $request->input('bulan', now()->month);
+        $tahun = $request->input('tahun', now()->year);
+
+        $namaFile = 'ChecklistPembersihan_' . \Carbon\Carbon::create($tahun, $bulan)->translatedFormat('F_Y') . '.xlsx';
+
+        return Excel::download(new ChecklistExport($bulan, $tahun), $namaFile);
+    }
 }
 
