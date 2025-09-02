@@ -54,6 +54,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/{id}/edit', [LaporanHarianController::class, 'edit'])->name('edit');
         Route::put('/{id}', [LaporanHarianController::class, 'update'])->name('update');
         Route::get('/pekerjaan-tersedia', [LaporanHarianController::class, 'getPekerjaanTersedia'])->name('pekerjaan-tersedia');
+        Route::get('/export-excel', [LaporanHarianController::class, 'exportExcel'])->name('exportexcel');
+        Route::post('/approval', [LaporanHarianController::class, 'storeApproval'])->name('storeapproval');
     });
 
     // ===========================

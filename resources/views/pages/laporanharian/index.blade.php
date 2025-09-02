@@ -312,6 +312,49 @@
                 </div>
             </div>
         </div>
+        <!-- Modal Persetujuan -->
+        <div class="modal fade" id="modalApproval" tabindex="-1" aria-labelledby="modalApprovalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form id="formApproval">
+                    @csrf
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Persetujuan Laporan</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
+                                <i class="fas fa-exclamation-triangle text-warning fs-4"></i>
+                                <div>
+                                    <strong>Perhatian:</strong> Laporan bulan ini belum <u>disetujui</u>. 
+                                    Harap isi nama dan tanda tangan untuk menyetujui sebelum melakukan ekspor.
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="approval_nama" class="form-label">Nama Penyetuju</label>
+                                <input type="text" class="form-control" id="approval_nama" name="nama" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Tanda Tangan</label>
+                                <canvas id="approvalCanvas" class="border" style="width:100%; height:200px;"></canvas>
+                                <input type="hidden" id="approval_ttd_base64" name="ttd_base64">
+                                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="approvalPad.clear()">Hapus</button>
+                            </div>
+
+                            <input type="hidden" name="bulan" id="approval_bulan">
+                            <input type="hidden" name="tahun" id="approval_tahun">
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Simpan & Download</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
     <style>
         .highlight-title {
@@ -593,6 +636,7 @@
         const editUrlTemplate = "{{ route('laporanharian.edit', ':id') }}";
         const updateUrlTemplate = "{{ route('laporanharian.update', ':id') }}";
         let editSignaturePad;
+        let approvalPad;
 
         function resizeCanvas(canvas, signaturePadInstance) {
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
@@ -643,6 +687,8 @@
             const editCanvas = document.getElementById("editSignatureCanvas");
             editSignaturePad = new SignaturePad(editCanvas);
             resizeCanvas(editCanvas, editSignaturePad);
+            const canvas = document.getElementById('approvalCanvas');
+            approvalPad = new SignaturePad(canvas);
 
             $('#tableLaporanHarian').DataTable({
                 scrollX: true,
@@ -667,7 +713,28 @@
                         extend: 'colvis',
                         text: '<i class="fas fa-columns"></i> Column Visible',
                         className: 'btn custom-button btn-sm me-1',
-                    }
+                    },
+                    {
+                        text: '<i class="fas fa-file-excel"></i> Export Excel',
+                        className: 'btn custom-button btn-sm me-1',
+                        action: function () {
+                            const bulan = $('#filter_bulan').val();
+                            const tahun = $('#filter_tahun').val();
+                            const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}&ajax=true`;
+
+                            $.get(url, function (response) {
+                                if (response.needs_approval) {
+                                    // Tampilkan modal form approval
+                                    $('#modalApproval').modal('show');
+                                    $('#approval_bulan').val(bulan);
+                                    $('#approval_tahun').val(tahun);
+                                } else {
+                                    // Langsung unduh Excel
+                                    window.location.href = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
+                                }
+                            });
+                        }
+                    },
                 ],
                 language: {
                     search: "_INPUT_",
@@ -774,11 +841,10 @@
             }
 
             $('#formEditLaporan')
-            .off('submit') // Pastikan tidak tumpuk
+            .off('submit')
             .on('submit', function (e) {
                 e.preventDefault();
 
-                // ambil signature
                 if (!editSignaturePad.isEmpty()) {
                     const dataUrl = editSignaturePad.toDataURL();
                     $('#paraf_signature_edit').val(dataUrl);
@@ -825,6 +891,38 @@
                 editSignaturePad.clear();
                 $("#paraf_signature_edit").val('');
             }
+
+            $('#formApproval').on('submit', function (e) {
+                e.preventDefault();
+
+                if (approvalPad.isEmpty()) {
+                    return Swal.fire('Error', 'Tanda tangan belum diisi.', 'error');
+                }
+
+                $('#approval_ttd_base64').val(approvalPad.toDataURL());
+
+                const formData = $(this).serialize();
+
+                $.post(`{{ route('laporanharian.storeapproval') }}`, formData, function (res) {
+                    $('#modalApproval').modal('hide');
+
+                    const bulan = $('#approval_bulan').val();
+                    const tahun = $('#approval_tahun').val();
+                    const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Disetujui!',
+                        text: 'Laporan berhasil disetujui dan akan diunduh...',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.href = url;
+                    });
+                }).fail(function (xhr) {
+                    Swal.fire('Error', 'Gagal menyimpan persetujuan.', 'error');
+                });
+            });
         });
     </script>
 </x-default-layout>

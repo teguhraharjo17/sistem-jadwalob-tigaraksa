@@ -7,9 +7,12 @@ use Illuminate\Http\Request;
 use App\Models\Checklist;
 use App\Models\ChecklistStatus;
 use App\Models\LaporanHarian;
+use App\Models\LaporanHarianApproval;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use App\Exports\LaporanHarianExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class LaporanHarianController extends Controller
 {
@@ -272,4 +275,65 @@ class LaporanHarianController extends Controller
 
         return response()->json($pekerjaanList);
     }
+
+    public function exportExcel(Request $request)
+    {
+        $bulan = $request->input('bulan', now()->month);
+        $tahun = $request->input('tahun', now()->year);
+        $ajax = $request->boolean('ajax', false);
+
+        $approval = LaporanHarianApproval::where('bulan', $bulan)
+            ->where('tahun', $tahun)
+            ->first();
+
+        if (!$approval) {
+            if ($ajax) {
+                return response()->json([
+                    'needs_approval' => true,
+                    'message' => 'Laporan bulan ini belum disetujui. Silakan isi nama & tanda tangan untuk menyetujui.'
+                ]);
+            } else {
+                abort(403, 'Laporan belum disetujui.');
+            }
+        }
+
+        $bulanNama = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->translatedFormat('F');
+        $namaFile = "LaporanHarian_{$bulanNama}_{$tahun}.xlsx";
+
+        return Excel::download(new LaporanHarianExport($bulan, $tahun, $approval), $namaFile);
+    }
+
+
+    public function storeApproval(Request $request)
+    {
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'ttd_base64' => 'required|string',
+            'bulan' => 'required|numeric|min:1|max:12',
+            'tahun' => 'required|numeric',
+        ]);
+
+        $exists = LaporanHarianApproval::where('bulan', $request->bulan)
+            ->where('tahun', $request->tahun)
+            ->exists();
+
+        if ($exists) {
+            return response()->json(['message' => 'Sudah disetujui sebelumnya'], 409);
+        }
+
+        $base64 = str_replace(['data:image/png;base64,', ' '], ['', '+'], $request->ttd_base64);
+        $filename = 'ttd_' . uniqid() . '.png';
+        $path = "paraf_menyetujui/{$filename}";
+        Storage::disk('public')->put($path, base64_decode($base64));
+
+        $approval = LaporanHarianApproval::create([
+            'bulan' => $request->bulan,
+            'tahun' => $request->tahun,
+            'nama' => $request->nama,
+            'ttd_path' => $path,
+        ]);
+
+        return response()->json(['message' => 'Disetujui dan disimpan.', 'approval' => $approval]);
+    }
+
 }
