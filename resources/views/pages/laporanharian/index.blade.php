@@ -717,6 +717,7 @@
                         text: '<i class="fas fa-columns"></i> Column Visible',
                         className: 'btn custom-button btn-sm me-1',
                     },
+                    @if(auth()->user()->hasRole('Admin'))
                     {
                         text: '<i class="fas fa-file-excel"></i> Export Excel',
                         className: 'btn custom-button btn-sm me-1',
@@ -727,17 +728,16 @@
 
                             $.get(url, function (response) {
                                 if (response.needs_approval) {
-                                    // Tampilkan modal form approval
                                     $('#modalApproval').modal('show');
                                     $('#approval_bulan').val(bulan);
                                     $('#approval_tahun').val(tahun);
                                 } else {
-                                    // Langsung unduh Excel
                                     window.location.href = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
                                 }
                             });
                         }
                     },
+                    @endif
                 ],
                 language: {
                     search: "_INPUT_",
