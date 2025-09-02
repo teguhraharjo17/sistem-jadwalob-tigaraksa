@@ -12,9 +12,9 @@ class Checklist extends Model
     protected $fillable = [
         'area',
         'pekerjaan',
-        'periodic_cleaning',
         'bulan',
         'tahun',
+        'start_date',
         'keterangan',
         'frequency_count',
         'frequency_unit',

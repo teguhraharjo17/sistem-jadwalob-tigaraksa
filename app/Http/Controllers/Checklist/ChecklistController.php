@@ -65,6 +65,7 @@ class ChecklistController extends Controller
             'pekerjaan' => 'required|string|max:255',
             'bulan' => 'required|integer|min:1|max:12',
             'tahun' => 'required|integer|min:2000',
+            'start_date' => 'required|date',
             'keterangan' => 'nullable|string',
             'frequency_count' => 'required|integer|min:1',
             'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu',
@@ -72,11 +73,20 @@ class ChecklistController extends Controller
             'default_shift' => 'nullable|in:Pagi,Siang',
         ]);
 
+        $startDate = \Carbon\Carbon::parse($validated['start_date']);
+        if ($startDate->month != $validated['bulan'] || $startDate->year != $validated['tahun']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal mulai harus sesuai dengan bulan dan tahun yang dipilih.'
+            ], 422);
+        }
+
         $checklist = Checklist::create([
             'area' => $validated['area'],
             'pekerjaan' => $validated['pekerjaan'],
             'bulan' => $validated['bulan'],
             'tahun' => $validated['tahun'],
+            'start_date' => $validated['start_date'],
             'keterangan' => $validated['keterangan'] ?? null,
             'frequency_count' => $validated['frequency_count'],
             'frequency_unit' => $validated['frequency_unit'],
@@ -86,19 +96,23 @@ class ChecklistController extends Controller
 
         $this->generateSchedule($checklist);
 
-        return response()->json(['success' => true, 'message' => 'Data berhasil disimpan.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Data berhasil disimpan.'
+        ]);
     }
+
 
     private function generateSchedule(Checklist $checklist)
     {
         $dates = collect();
-        $start = Carbon::create($checklist->tahun, $checklist->bulan, 1);
-        $end = $start->copy()->endOfMonth();
+
+        $start = Carbon::parse($checklist->start_date);
+        $end   = Carbon::create($checklist->tahun, $checklist->bulan)->endOfMonth();
 
         switch ($checklist->frequency_unit) {
             case 'per_hari':
                 for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
-                    // skip Sabtu & Minggu
                     if ($date->isWeekend()) {
                         continue;
                     }
@@ -111,24 +125,20 @@ class ChecklistController extends Controller
                 $date = $start->copy();
 
                 while ($date->lte($end)) {
-                    // Jika bukan Sabtu/Minggu, tambahkan
                     if (!$date->isWeekend()) {
                         $dates->push($date->copy());
                     }
 
-                    // Lompat ke tanggal berikutnya sesuai interval
                     $daysAdded = 0;
                     while ($daysAdded < $interval) {
                         $date->addDay();
 
-                        // Hanya hitung hari kerja
                         if (!$date->isWeekend()) {
                             $daysAdded++;
                         }
                     }
                 }
                 break;
-
 
             case 'per_minggu':
                 $weekStart = $start->copy();
@@ -197,6 +207,7 @@ class ChecklistController extends Controller
             'pekerjaan' => 'required|string|max:255',
             'bulan' => 'required|integer|min:1|max:12',
             'tahun' => 'required|integer|min:2000',
+            'start_date' => 'required|date',
             'keterangan' => 'nullable|string',
             'frequency_count' => 'required|integer|min:1',
             'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu',
@@ -204,15 +215,37 @@ class ChecklistController extends Controller
             'default_shift' => 'nullable|in:Pagi,Siang',
         ]);
 
+        $startDate = \Carbon\Carbon::parse($validated['start_date']);
+        if ($startDate->month != $validated['bulan'] || $startDate->year != $validated['tahun']) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tanggal mulai harus sesuai dengan bulan dan tahun yang dipilih.'
+            ], 422);
+        }
+
         $checklist = Checklist::findOrFail($id);
 
         ChecklistStatus::where('checklist_id', $checklist->id)->delete();
 
-        $checklist->update($validated);
+        $checklist->update([
+            'area' => $validated['area'],
+            'pekerjaan' => $validated['pekerjaan'],
+            'bulan' => $validated['bulan'],
+            'tahun' => $validated['tahun'],
+            'start_date' => $validated['start_date'],
+            'keterangan' => $validated['keterangan'] ?? null,
+            'frequency_count' => $validated['frequency_count'],
+            'frequency_unit' => $validated['frequency_unit'],
+            'frequency_interval' => $validated['frequency_interval'] ?? null,
+            'default_shift' => $validated['default_shift'] ?? null,
+        ]);
 
         $this->generateSchedule($checklist);
 
-        return response()->json(['success' => true, 'message' => 'Checklist berhasil diperbarui.']);
+        return response()->json([
+            'success' => true,
+            'message' => 'Checklist berhasil diperbarui.'
+        ]);
     }
 
     public function exportExcel(Request $request)

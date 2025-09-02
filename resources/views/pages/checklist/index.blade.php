@@ -156,6 +156,12 @@
                             </div>
 
                             <div class="mb-3">
+                                <label for="start_date" class="form-label">Dimulai Tanggal</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required>
+                                <small class="text-muted">Checklist akan mulai dihitung sejak tanggal ini.</small>
+                            </div>
+
+                            <div class="mb-3">
                                 <label for="frequency_count" class="form-label">Periode Pekerjaan</label>
                                 <div class="row g-2">
                                     <div class="col-md-4">
@@ -245,6 +251,11 @@
                             <div class="mb-3">
                                 <label for="edit_pekerjaan" class="form-label">Pekerjaan</label>
                                 <input type="text" class="form-control" id="edit_pekerjaan" name="pekerjaan" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="edit_start_date" class="form-label">Dimulai Tanggal</label>
+                                <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
                             </div>
 
                             <div class="mb-3">
@@ -713,6 +724,7 @@
                     form.attr('action', updateChecklistUrlTemplate.replace(':id', id));
                     form.find('[name=area]').val(c.area).trigger('change');
                     form.find('[name=pekerjaan]').val(c.pekerjaan);
+                    form.find('[name=start_date]').val(c.start_date);
                     form.find('[name=frequency_count]').val(c.frequency_count);
                     form.find('[name=frequency_unit]').val(c.frequency_unit);
                     form.find('[name=frequency_interval]').val(c.frequency_interval);
