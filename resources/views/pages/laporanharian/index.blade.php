@@ -64,7 +64,14 @@
                                 <td class="text-start">{{ $laporan->area ?? '-' }}</td>
                                 <td class="text-center">
                                     @if ($laporan->bukti)
-                                        <a href="{{ asset('public/storage/'.$laporan->bukti) }}" target="_blank">Lihat</a>
+                                        @php
+                                            $decoded = json_decode($laporan->bukti, true);
+                                            $buktiList = is_array($decoded) ? $decoded : [$laporan->bukti];
+                                        @endphp
+
+                                        @foreach ($buktiList as $bukti)
+                                            <a href="{{ asset('public/storage/'.$bukti) }}" target="_blank" class="d-block">Lihat</a>
+                                        @endforeach
                                     @else
                                         -
                                     @endif
@@ -203,8 +210,8 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="bukti" class="form-label">Upload Bukti</label>
-                                <input type="file" class="form-control" id="bukti" name="bukti" accept="image/*,application/pdf">
+                                <label for="bukti" class="form-label">Upload Bukti (Bisa lebih dari 1)</label>
+                                <input type="file" class="form-control" id="bukti" name="bukti[]" accept="image/*,application/pdf" multiple>
                             </div>
                         </div>
 
@@ -277,7 +284,7 @@
 
                             <div class="mb-3">
                                 <label for="edit_bukti" class="form-label">Upload Bukti</label>
-                                <input type="file" class="form-control" id="edit_bukti" name="bukti" accept="image/*,application/pdf">
+                                <input type="file" class="form-control" id="edit_bukti" name="bukti[]" accept="image/*,application/pdf" multiple>
                                 <div id="preview_bukti" class="mt-2"></div>
                             </div>
 
@@ -819,17 +826,21 @@
                         $('#preview_paraf').html('');
                     }
 
-                    if (laporan.bukti) {
-                        const ekstensi = laporan.bukti.split('.').pop().toLowerCase();
-                        const url = `public/storage/${laporan.bukti}`;
+                    if (laporan.bukti_list && laporan.bukti_list.length) {
+                        let html = '';
+                        laporan.bukti_list.forEach(function (bukti) {
+                            const ekstensi = bukti.split('.').pop().toLowerCase();
+                            const url = `public/storage/${bukti}`;
 
-                        if (['jpg', 'jpeg', 'png'].includes(ekstensi)) {
-                            $('#preview_bukti').html(`<img src="${url}" width="360">`);
-                        } else if (ekstensi === 'pdf') {
-                            $('#preview_bukti').html(`<a href="${url}" target="_blank">Lihat Bukti (PDF)</a>`);
-                        } else {
-                            $('#preview_bukti').html(`<a href="${url}" target="_blank">Lihat Bukti</a>`);
-                        }
+                            if (['jpg', 'jpeg', 'png'].includes(ekstensi)) {
+                                html += `<img src="${url}" width="150" class="me-2 mb-2">`;
+                            } else if (ekstensi === 'pdf') {
+                                html += `<a href="${url}" target="_blank" class="d-block">Lihat Bukti (PDF)</a>`;
+                            } else {
+                                html += `<a href="${url}" target="_blank" class="d-block">Lihat Bukti</a>`;
+                            }
+                        });
+                        $('#preview_bukti').html(html);
                     } else {
                         $('#preview_bukti').html('');
                     }

@@ -78,7 +78,7 @@ class LaporanHarianController extends Controller
             'jam_selesai' => 'required',
             'item_pekerjaan' => 'required|exists:checklists,id',
             'area' => 'required|string|max:255',
-            'bukti' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'bukti.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'hasil_pekerjaan' => 'nullable|string',
             'mengetahui' => 'nullable|string|max:255',
             'paraf' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
@@ -111,10 +111,13 @@ class LaporanHarianController extends Controller
         }
 
         // Upload bukti kerja
-        $buktiPath = null;
+        $buktiPaths = [];
         if ($request->hasFile('bukti')) {
-            $buktiPath = $request->file('bukti')->store('bukti_laporan', 'public');
+            foreach ($request->file('bukti') as $file) {
+                $buktiPaths[] = $file->store('bukti_laporan', 'public');
+            }
         }
+
 
         // Simpan laporan
         LaporanHarian::create([
@@ -124,7 +127,7 @@ class LaporanHarianController extends Controller
             'jam_selesai' => $validated['jam_selesai'],
             'checklist_id' => $validated['item_pekerjaan'],
             'area' => $validated['area'],
-            'bukti' => $buktiPath,
+            'bukti' => $buktiPaths ? json_encode($buktiPaths) : null,
             'hasil_pekerjaan' => $validated['hasil_pekerjaan'] ?? null,
             'mengetahui' => $validated['mengetahui'] ?? null,
             'paraf' => $parafPath,
@@ -148,6 +151,16 @@ class LaporanHarianController extends Controller
     public function edit($id)
     {
         $laporan = LaporanHarian::findOrFail($id);
+
+        // Normalisasi bukti jadi array
+        $buktiList = [];
+        if ($laporan->bukti) {
+            $decoded = json_decode($laporan->bukti, true);
+            $buktiList = is_array($decoded) ? $decoded : [$laporan->bukti];
+        }
+
+        $laporan->bukti_list = $buktiList; // kirim array ke JS
+
         $pekerjaanList = Checklist::select('id', 'pekerjaan')->orderBy('pekerjaan')->get();
         $areaList = Checklist::select('area')->distinct()->pluck('area');
 
@@ -169,7 +182,7 @@ class LaporanHarianController extends Controller
             'jam_selesai' => 'required',
             'item_pekerjaan' => 'required|exists:checklists,id',
             'area' => 'required|string|max:255',
-            'bukti' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'bukti.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'hasil_pekerjaan' => 'nullable|string',
             'mengetahui' => 'nullable|string|max:255',
             'paraf' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
@@ -216,13 +229,24 @@ class LaporanHarianController extends Controller
         }
 
         // Bukti
-        $buktiPath = $laporan->bukti;
-        if ($request->hasFile('bukti')) {
-            if ($buktiPath) {
-                Storage::disk('public')->delete($buktiPath);
-            }
-            $buktiPath = $request->file('bukti')->store('bukti_laporan', 'public');
+        $buktiPaths = [];
+        if ($laporan->bukti) {
+            $decoded = json_decode($laporan->bukti, true);
+            $buktiPaths = is_array($decoded) ? $decoded : [$laporan->bukti];
         }
+
+        if ($request->hasFile('bukti')) {
+            // Kalau mau replace → hapus lama
+            foreach ($buktiPaths as $old) {
+                Storage::disk('public')->delete($old);
+            }
+            $buktiPaths = [];
+
+            foreach ($request->file('bukti') as $file) {
+                $buktiPaths[] = $file->store('bukti_laporan', 'public');
+            }
+        }
+
 
         // Update laporan
         $laporan->update([
@@ -232,7 +256,9 @@ class LaporanHarianController extends Controller
             'jam_selesai' => $validated['jam_selesai'],
             'checklist_id' => $validated['item_pekerjaan'],
             'area' => $validated['area'],
-            'bukti' => $buktiPath,
+            'bukti' => count($buktiPaths) > 1
+                    ? json_encode($buktiPaths)
+                    : ($buktiPaths[0] ?? null),
             'hasil_pekerjaan' => $validated['hasil_pekerjaan'] ?? null,
             'mengetahui' => $validated['mengetahui'] ?? null,
             'paraf' => $parafPath,
