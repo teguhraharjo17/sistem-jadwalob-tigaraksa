@@ -92,6 +92,8 @@
                                             per hari
                                         @elseif($item->frequency_unit === 'per_minggu')
                                             per minggu
+                                        @elseif($item->frequency_unit === 'per_x_minggu')
+                                            per {{ $item->frequency_interval }} minggu
                                         @elseif($item->frequency_unit === 'per_bulan')
                                             per bulan
                                         @endif
@@ -199,11 +201,12 @@
                                             <option value="per_hari">x per Hari</option>
                                             <option value="per_x_hari">x per X Hari</option>
                                             <option value="per_minggu">x per Minggu</option>
+                                            <option value="per_x_minggu">x per X Minggu</option>
                                             <option value="per_bulan">x per Bulan</option>
                                         </select>
                                     </div>
                                     <div class="col-md-4">
-                                        <input type="number" class="form-control" name="frequency_interval" min="1" placeholder="Isi jika X Hari (cth: 2)">
+                                        <input type="number" class="form-control" name="frequency_interval" min="1" placeholder="Isi jika X Hari/Minggu (cth: 2)">
                                     </div>
                                 </div>
                                 <small class="text-muted d-block mt-1">Contoh: 2x per hari = Isi <b>2</b> dan pilih <b>per Hari</b>.</small>
@@ -297,6 +300,7 @@
                                             <option value="per_hari">x per Hari</option>
                                             <option value="per_x_hari">x per X Hari</option>
                                             <option value="per_minggu">x per Minggu</option>
+                                            <option value="per_x_minggu">x per X Minggu</option>
                                             <option value="per_bulan">x per Bulan</option>
                                         </select>
                                     </div>

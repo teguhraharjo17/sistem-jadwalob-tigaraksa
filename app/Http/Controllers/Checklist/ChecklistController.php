@@ -97,7 +97,7 @@ class ChecklistController extends Controller
             'start_date' => 'required|date',
             'keterangan' => 'nullable|string',
             'frequency_count' => 'required|integer|min:1',
-            'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu,per_bulan',
+            'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu,per_bulan,per_x_minggu',
             'frequency_interval' => 'nullable|integer|min:1',
             'default_shift' => 'nullable|in:Pagi,Siang',
         ]);
@@ -132,31 +132,32 @@ class ChecklistController extends Controller
     }
 
 
-    private function generateSchedule(Checklist $checklist)
+    private function generateSchedule(Checklist $checklist, $holidayDates = [])
     {
         $dates = collect();
         $start = Carbon::parse($checklist->start_date);
         $end   = Carbon::create($checklist->tahun, $checklist->bulan)->endOfMonth();
 
-        // 🔹 Ambil libur dari API
-        $holidayResponse = Http::get('http://192.168.0.8:8000/api/libur');
-        $holidayDates = collect($holidayResponse->json())
-            ->pluck('tanggal')
-            ->map(fn($t) => Carbon::parse($t)->format('Y-m-d'))
-            ->toArray();
+        if (empty($holidayDates)) {
+            $holidayResponse = Http::get('http://192.168.0.8:8000/api/libur');
+            $holidayDates = collect($holidayResponse->json())
+                ->pluck('tanggal')
+                ->map(fn($t) => Carbon::parse($t)->format('Y-m-d'))
+                ->toArray();
+        }
 
         switch ($checklist->frequency_unit) {
             case 'per_hari':
                 for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
                     if ($date->isWeekend() || in_array($date->format('Y-m-d'), $holidayDates)) {
-                        continue; // skip weekend & libur
+                        continue;
                     }
                     $dates->push($date->copy());
                 }
                 break;
 
             case 'per_x_hari':
-                $interval = $checklist->frequency_interval ?? 1;
+                $interval = max(1, $checklist->frequency_interval);
                 $date = $start->copy();
 
                 while ($date->lte($end)) {
@@ -165,9 +166,8 @@ class ChecklistController extends Controller
                     }
 
                     $daysAdded = 0;
-                    while ($daysAdded < $interval) {
+                    while ($daysAdded < $interval && $date->lte($end)) {
                         $date->addDay();
-
                         if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
                             $daysAdded++;
                         }
@@ -185,6 +185,17 @@ class ChecklistController extends Controller
                 }
                 break;
 
+            case 'per_x_minggu':
+                $interval = max(1, $checklist->frequency_interval);
+                $date = $start->copy();
+                while ($date->lte($end)) {
+                    if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
+                        $dates->push($date->copy());
+                    }
+                    $date->addWeeks($interval);
+                }
+                break;
+
             case 'per_bulan':
                 $targetDate = Carbon::parse($checklist->start_date);
                 if ($targetDate->month == $checklist->bulan &&
@@ -196,17 +207,9 @@ class ChecklistController extends Controller
         }
 
         foreach ($dates as $date) {
-            $shifts = [];
-
-            if ($checklist->frequency_unit === 'per_hari') {
-                $shifts = $checklist->frequency_count == 1
-                    ? [$checklist->default_shift ?? 'Pagi']
-                    : ['Pagi', 'Siang'];
-            } else {
-                $shifts = $checklist->frequency_count == 2
-                    ? ['Pagi', 'Siang']
-                    : [$checklist->default_shift ?? 'Pagi'];
-            }
+            $shifts = $checklist->frequency_count == 2
+                ? ['Pagi', 'Siang']
+                : [$checklist->default_shift ?? 'Pagi'];
 
             foreach ($shifts as $shift) {
                 ChecklistStatus::firstOrCreate([
@@ -241,7 +244,7 @@ class ChecklistController extends Controller
             'start_date' => 'required|date',
             'keterangan' => 'nullable|string',
             'frequency_count' => 'required|integer|min:1',
-            'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu,per_bulan',
+            'frequency_unit' => 'required|in:per_hari,per_x_hari,per_minggu,per_bulan,per_x_minggu',
             'frequency_interval' => 'nullable|integer|min:1',
             'default_shift' => 'nullable|in:Pagi,Siang',
         ]);
