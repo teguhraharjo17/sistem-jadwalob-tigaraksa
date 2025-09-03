@@ -1017,10 +1017,40 @@
                 const file = input.files[0];
                 const preview = document.getElementById(previewId);
                 preview.innerHTML = '';
+
                 if (file && file.type.startsWith('image/')) {
                     const reader = new FileReader();
                     reader.onload = function (e) {
-                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="img-thumbnail" style="max-width: 150px;">`;
+                        const img = new Image();
+                        img.onload = function () {
+                            const canvas = document.createElement('canvas');
+                            const ctx = canvas.getContext('2d');
+
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+
+                            ctx.drawImage(img, 0, 0);
+
+                            const now = new Date();
+                            const watermarkText = now.toLocaleString();
+
+                            ctx.font = 'bold 36px Arial';
+                            ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
+                            ctx.textAlign = 'right';
+                            ctx.fillText(watermarkText, canvas.width - 20, canvas.height - 20);
+
+                            const watermarkedImage = canvas.toDataURL('image/jpeg');
+                            preview.innerHTML = `<img src="${watermarkedImage}" alt="Preview" class="img-thumbnail" style="max-width: 150px;">`;
+
+                            canvas.toBlob(function (blob) {
+                                const newFile = new File([blob], file.name, { type: 'image/jpeg' });
+
+                                const dataTransfer = new DataTransfer();
+                                dataTransfer.items.add(newFile);
+                                input.files = dataTransfer.files;
+                            }, 'image/jpeg', 0.9);
+                        };
+                        img.src = e.target.result;
                     };
                     reader.readAsDataURL(file);
                 } else if (file && file.type === 'application/pdf') {
