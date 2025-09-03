@@ -176,19 +176,12 @@ class ChecklistController extends Controller
                 break;
 
             case 'per_minggu':
-                $weekStart = $start->copy();
-                while ($weekStart->lte($end)) {
-                    $targetDate = $weekStart->copy()->startOfWeek(Carbon::MONDAY);
-
-                    if ($targetDate->isSaturday()) $targetDate->subDay();
-                    elseif ($targetDate->isSunday()) $targetDate->subDays(2);
-
-                    if ($targetDate->month === $start->month &&
-                        !in_array($targetDate->format('Y-m-d'), $holidayDates)) {
-                        $dates->push($targetDate);
+                $date = $start->copy();
+                while ($date->lte($end)) {
+                    if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
+                        $dates->push($date->copy());
                     }
-
-                    $weekStart->addWeek();
+                    $date->addWeek();
                 }
                 break;
 
