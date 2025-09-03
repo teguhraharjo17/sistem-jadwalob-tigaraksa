@@ -628,7 +628,7 @@
         $(document).ready(function () {
             $('#tablechecklist').DataTable({
                 scrollX: true,
-                paging: false,
+                paging: true,
                 searching: true,
                 ordering: false,
                 rowGroup: {
