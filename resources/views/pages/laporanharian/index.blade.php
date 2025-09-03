@@ -702,7 +702,7 @@
 
             $('#tableLaporanHarian').DataTable({
                 scrollX: true,
-                paging: false,
+                paging: true,
                 searching: true,
                 ordering: false,
                 dom: '<"row mb-3 align-items-center"' +
