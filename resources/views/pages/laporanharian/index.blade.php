@@ -210,8 +210,33 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="bukti" class="form-label">Upload Bukti (Bisa lebih dari 1)</label>
-                                <input type="file" class="form-control" id="bukti" name="bukti[]" accept="image/*,application/pdf" multiple>
+                                <label class="form-label">Upload Bukti Kerja (dari Kamera / Galeri)</label>
+
+                                <table class="table table-bordered" id="buktiUploadTable">
+                                    <thead>
+                                        <tr>
+                                            <th>File</th>
+                                            <th style="width: 50px;">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="buktiUploadBody">
+                                        <tr>
+                                            <tr>
+                                                <td>
+                                                    <input type="file" name="bukti[]" accept="image/*,application/pdf" capture="environment" class="form-control mb-1" required onchange="previewFile(this, 'preview_default')">
+                                                    <div id="preview_default" class="mt-1"></div>
+                                                </td>
+                                                <td class="text-center">
+                                                    <button type="button" class="btn btn-sm btn-danger" onclick="removeBuktiRow(this)">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        </tr>
+                                    </tbody>
+                                </table>
+
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="addBuktiRow()">+ Tambah Baris Bukti</button>
                             </div>
                         </div>
 
@@ -283,9 +308,23 @@
                             </div>
 
                             <div class="mb-3">
-                                <label for="edit_bukti" class="form-label">Upload Bukti</label>
-                                <input type="file" class="form-control" id="edit_bukti" name="bukti[]" accept="image/*,application/pdf" multiple>
-                                <div id="preview_bukti" class="mt-2"></div>
+                                <label class="form-label">Upload Bukti (Kamera / Galeri)</label>
+
+                                <table class="table table-bordered" id="editBuktiTable">
+                                    <thead>
+                                        <tr>
+                                            <th>File</th>
+                                            <th style="width: 50px;">Aksi</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="editBuktiBody">
+                                    </tbody>
+                                </table>
+
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="addEditBuktiRow()">+ Tambah Bukti</button>
+
+                                <div id="preview_bukti_existing" class="mt-2">
+                                </div>
                             </div>
 
                             <fieldset class="border p-3 mb-3">
@@ -826,25 +865,40 @@
                         $('#preview_paraf').html('');
                     }
 
+                    $('#editBuktiBody').html('');
+
                     if (laporan.bukti_list && laporan.bukti_list.length) {
-                        let html = '';
-                        laporan.bukti_list.forEach(function (bukti) {
+                        laporan.bukti_list.forEach(function (bukti, index) {
                             const ekstensi = bukti.split('.').pop().toLowerCase();
                             const url = `public/storage/${bukti}`;
+                            const previewId = `preview_existing_${index}`;
 
+                            let previewHTML = '';
                             if (['jpg', 'jpeg', 'png'].includes(ekstensi)) {
-                                html += `<img src="${url}" width="150" class="me-2 mb-2">`;
+                                previewHTML = `<img src="${url}" alt="Preview" class="img-thumbnail mb-1" style="max-width: 150px;">`;
                             } else if (ekstensi === 'pdf') {
-                                html += `<a href="${url}" target="_blank" class="d-block">Lihat Bukti (PDF)</a>`;
-                            } else {
-                                html += `<a href="${url}" target="_blank" class="d-block">Lihat Bukti</a>`;
+                                previewHTML = `<a href="${url}" target="_blank" class="badge bg-secondary d-inline-block mb-1">Lihat PDF</a>`;
                             }
-                        });
-                        $('#preview_bukti').html(html);
-                    } else {
-                        $('#preview_bukti').html('');
-                    }
 
+                            $('#editBuktiBody').append(`
+                                <tr>
+                                    <td>
+                                        <input type="hidden" name="bukti_lama[]" value="${bukti}">
+                                        ${previewHTML}
+                                        <input type="file" name="bukti_ganti[]" accept="image/*,application/pdf" class="form-control mb-1" onchange="previewFile(this, '${previewId}')">
+                                        <div id="${previewId}" class="mt-1"></div>
+                                    </td>
+                                    <td class="text-center align-middle">
+                                        <button type="button" class="btn btn-sm btn-danger" onclick="removeBuktiRow(this)">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                        });
+                    } else {
+                        $('#editBuktiBody').html(''); // kosongkan tabel jika tidak ada bukti
+                    }
                     $('#editLaporanModal').modal('show');
                 });
             });
@@ -937,6 +991,70 @@
                     Swal.fire('Error', 'Gagal menyimpan persetujuan.', 'error');
                 });
             });
+
+            window.addBuktiRow = function () {
+                const tbody = document.getElementById('buktiUploadBody');
+                const row = document.createElement('tr');
+
+                const uniqueId = 'preview_' + Date.now();
+
+                row.innerHTML = `
+                    <td>
+                        <input type="file" name="bukti[]" accept="image/*,application/pdf" capture="environment" class="form-control mb-1" required onchange="previewFile(this, '${uniqueId}')">
+                        <div id="${uniqueId}" class="mt-1"></div>
+                    </td>
+                    <td class="text-center align-middle">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeBuktiRow(this)">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            };
+
+            window.previewFile = function (input, previewId) {
+                const file = input.files[0];
+                const preview = document.getElementById(previewId);
+                preview.innerHTML = '';
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        preview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="img-thumbnail" style="max-width: 150px;">`;
+                    };
+                    reader.readAsDataURL(file);
+                } else if (file && file.type === 'application/pdf') {
+                    preview.innerHTML = `<span class="badge bg-secondary">PDF dipilih</span>`;
+                }
+            };
+
+            window.removeBuktiRow = function (button) {
+                const row = button.closest('tr');
+                row.remove();
+            };
+
+            window.addEditBuktiRow = function () {
+                const tbody = document.getElementById('editBuktiBody');
+                const row = document.createElement('tr');
+
+                const uniqueId = 'preview_edit_' + Date.now();
+
+                row.innerHTML = `
+                    <td>
+                        <input type="file" name="bukti[]" accept="image/*,application/pdf" capture="environment" class="form-control mb-1" required onchange="previewFile(this, '${uniqueId}')">
+                        <div id="${uniqueId}" class="mt-1"></div>
+                    </td>
+                    <td class="text-center align-middle">
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeBuktiRow(this)">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            };
+
+
         });
     </script>
 </x-default-layout>

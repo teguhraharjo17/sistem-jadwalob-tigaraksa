@@ -175,6 +175,7 @@ class LaporanHarianController extends Controller
     {
         $laporan = LaporanHarian::findOrFail($id);
 
+        // Validasi form input
         $validated = $request->validate([
             'tanggal' => 'required|date',
             'shift' => 'required|in:Pagi,Siang',
@@ -182,19 +183,23 @@ class LaporanHarianController extends Controller
             'jam_selesai' => 'required',
             'item_pekerjaan' => 'required|exists:checklists,id',
             'area' => 'required|string|max:255',
-            'bukti.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             'hasil_pekerjaan' => 'nullable|string',
             'mengetahui' => 'nullable|string|max:255',
             'paraf' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
+            'paraf_signature_edit' => 'nullable|string',
+            'bukti.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'bukti_lama' => 'nullable|array',
+            'bukti_ganti.*' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
 
+        // Validasi jam kerja
         if ($validated['jam_selesai'] < $validated['jam_mulai']) {
             return back()->withErrors([
                 'jam_selesai' => 'Jam selesai tidak boleh lebih awal dari jam mulai.'
             ])->withInput();
         }
 
-        // Validasi: hanya bisa update jika tanggal & shift sesuai dengan jadwal checklist
+        // Cek apakah checklist dijadwalkan di tanggal dan shift tersebut
         $checklist = Checklist::findOrFail($validated['item_pekerjaan']);
         $statusAda = ChecklistStatus::where('checklist_id', $checklist->id)
             ->where('tanggal', $validated['tanggal'])
@@ -207,10 +212,14 @@ class LaporanHarianController extends Controller
             ])->withInput();
         }
 
-        // Paraf (via gambar atau signature)
+        // ===================== //
+        // 1️⃣ PARAF PROCESSING
+        // ===================== //
         $parafPath = $laporan->paraf;
+
+        // Jika user menggambar ulang signature
         if ($request->filled('paraf_signature_edit')) {
-            if ($parafPath) {
+            if ($parafPath && Storage::disk('public')->exists($parafPath)) {
                 Storage::disk('public')->delete($parafPath);
             }
 
@@ -221,34 +230,50 @@ class LaporanHarianController extends Controller
             $parafPath = $path;
         }
 
+        // Jika user upload file baru
         if ($request->hasFile('paraf')) {
-            if ($parafPath) {
+            if ($parafPath && Storage::disk('public')->exists($parafPath)) {
                 Storage::disk('public')->delete($parafPath);
             }
             $parafPath = $request->file('paraf')->store('paraf_approve', 'public');
         }
 
-        // Bukti
-        $buktiPaths = [];
-        if ($laporan->bukti) {
-            $decoded = json_decode($laporan->bukti, true);
-            $buktiPaths = is_array($decoded) ? $decoded : [$laporan->bukti];
+        // ===================== //
+        // 2️⃣ BUKTI PROCESSING
+        // ===================== //
+        $buktiFinal = [];
+
+        // Ambil bukti lama yang dipertahankan
+        $buktiLama = $request->input('bukti_lama', []);
+
+        foreach ($buktiLama as $index => $oldPath) {
+            // Jika ada file baru di baris ini → replace
+            if ($request->hasFile("bukti_ganti.$index")) {
+                $newFile = $request->file("bukti_ganti.$index");
+                $newPath = $newFile->store('bukti_laporan', 'public');
+
+                // Hapus file lama
+                if (Storage::disk('public')->exists($oldPath)) {
+                    Storage::disk('public')->delete($oldPath);
+                }
+
+                $buktiFinal[] = $newPath;
+            } else {
+                // Tidak diganti → pertahankan
+                $buktiFinal[] = $oldPath;
+            }
         }
 
+        // Tambah bukti baru dari input
         if ($request->hasFile('bukti')) {
-            // Kalau mau replace → hapus lama
-            foreach ($buktiPaths as $old) {
-                Storage::disk('public')->delete($old);
-            }
-            $buktiPaths = [];
-
             foreach ($request->file('bukti') as $file) {
-                $buktiPaths[] = $file->store('bukti_laporan', 'public');
+                $buktiFinal[] = $file->store('bukti_laporan', 'public');
             }
         }
 
-
-        // Update laporan
+        // ===================== //
+        // 3️⃣ UPDATE DATA
+        // ===================== //
         $laporan->update([
             'tanggal' => $validated['tanggal'],
             'shift' => $validated['shift'],
@@ -256,9 +281,7 @@ class LaporanHarianController extends Controller
             'jam_selesai' => $validated['jam_selesai'],
             'checklist_id' => $validated['item_pekerjaan'],
             'area' => $validated['area'],
-            'bukti' => count($buktiPaths) > 1
-                    ? json_encode($buktiPaths)
-                    : ($buktiPaths[0] ?? null),
+            'bukti' => count($buktiFinal) > 1 ? json_encode($buktiFinal) : ($buktiFinal[0] ?? null),
             'hasil_pekerjaan' => $validated['hasil_pekerjaan'] ?? null,
             'mengetahui' => $validated['mengetahui'] ?? null,
             'paraf' => $parafPath,
