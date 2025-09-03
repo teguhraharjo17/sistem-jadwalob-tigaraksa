@@ -52,7 +52,6 @@ class LaporanHarianExport implements
             'Hasil Pekerjaan',
             'Mengetahui',
             'Paraf',
-            'Bukti Kerja',
         ]];
     }
 
@@ -68,7 +67,6 @@ class LaporanHarianExport implements
             $row->hasil_pekerjaan,
             $row->mengetahui,
             '', // paraf
-            '', // bukti
         ];
     }
 
@@ -117,7 +115,7 @@ class LaporanHarianExport implements
                 $sheet->getRowDimension(1)->setRowHeight(30);
 
                 // Header style
-                $sheet->getStyle("A{$headerRow}:J{$headerRow}")->applyFromArray([
+                $sheet->getStyle("A{$headerRow}:I{$headerRow}")->applyFromArray([
                     'font' => ['bold' => true],
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -128,7 +126,7 @@ class LaporanHarianExport implements
                 ]);
 
                 // Data style
-                $sheet->getStyle("A{$startRow}:J{$totalRows}")->applyFromArray([
+                $sheet->getStyle("A{$startRow}:I{$totalRows}")->applyFromArray([
                     'alignment' => [
                         'horizontal' => Alignment::HORIZONTAL_CENTER,
                         'vertical' => Alignment::VERTICAL_CENTER,
@@ -189,16 +187,6 @@ class LaporanHarianExport implements
                 $drawingParaf->setOffsetX(12);
                 $drawingParaf->setOffsetY(10);
                 $drawings[] = $drawingParaf;
-            }
-
-            if ($row->bukti && file_exists(storage_path('app/public/' . $row->bukti))) {
-                $drawingBukti = new Drawing();
-                $drawingBukti->setPath(storage_path('app/public/' . $row->bukti));
-                $drawingBukti->setHeight(60);
-                $drawingBukti->setCoordinates('J' . $excelRow);
-                $drawingBukti->setOffsetX(12);
-                $drawingBukti->setOffsetY(10);
-                $drawings[] = $drawingBukti;
             }
         }
 
