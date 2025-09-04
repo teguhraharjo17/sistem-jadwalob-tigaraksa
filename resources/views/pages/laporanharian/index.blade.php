@@ -70,7 +70,16 @@
                                         @endphp
 
                                         @foreach ($buktiList as $bukti)
-                                            <a href="{{ asset('public/storage/'.$bukti) }}" target="_blank" class="d-block">Lihat</a>
+                                            @php
+                                                $ext = pathinfo($bukti, PATHINFO_EXTENSION);
+                                                $url = asset('public/storage/'.$bukti);
+                                            @endphp
+
+                                            @if (in_array(strtolower($ext), ['jpg', 'jpeg', 'png']))
+                                                <img src="{{ $url }}" alt="Bukti" class="img-thumbnail me-1 mb-1" style="max-height: 100px;">
+                                            @elseif(strtolower($ext) === 'pdf')
+                                                <a href="{{ $url }}" target="_blank" class="badge bg-secondary d-block mb-1">Lihat PDF</a>
+                                            @endif
                                         @endforeach
                                     @else
                                         -
@@ -404,6 +413,16 @@
                 </form>
             </div>
         </div>
+        <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-xl">
+                <div class="modal-content bg-dark">
+                    <div class="modal-body p-0 position-relative text-center">
+                        <img id="modalPreviewImage" src="" alt="Preview" class="img-fluid" style="max-height: 90vh; cursor: zoom-in;">
+                        <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <style>
         .highlight-title {
@@ -671,6 +690,12 @@
             height: 50px;
             width: auto;
             object-fit: contain;
+        }
+
+        #modalPreviewImage {
+            transition: transform 0.3s ease;
+            max-width: 100%;
+            height: auto;
         }
     </style>
 
@@ -1084,7 +1109,38 @@
                 tbody.appendChild(row);
             };
 
+            $(document).on('click', '.img-thumbnail', function () {
+                const src = $(this).attr('src');
+                $('#modalPreviewImage').attr('src', src);
+                $('#imagePreviewModal').modal('show');
+            });
 
+            let isZoomed = false;
+
+            $('#modalPreviewImage').on('click', function () {
+                if (!isZoomed) {
+                    $(this).css({
+                        'transform': 'scale(2)',
+                        'transition': 'transform 0.3s ease',
+                        'cursor': 'zoom-out'
+                    });
+                    isZoomed = true;
+                } else {
+                    $(this).css({
+                        'transform': 'scale(1)',
+                        'cursor': 'zoom-in'
+                    });
+                    isZoomed = false;
+                }
+            });
+
+            $('#imagePreviewModal').on('hidden.bs.modal', function () {
+                $('#modalPreviewImage').css({
+                    'transform': 'scale(1)',
+                    'cursor': 'zoom-in'
+                });
+                isZoomed = false;
+            });
         });
     </script>
 </x-default-layout>
