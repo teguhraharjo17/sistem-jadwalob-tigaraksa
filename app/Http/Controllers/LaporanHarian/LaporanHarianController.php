@@ -30,7 +30,7 @@ class LaporanHarianController extends Controller
         $laporanList = LaporanHarian::with('checklist')
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
-            ->orderBy('tanggal', 'asc')
+            ->orderBy('tanggal', 'desc')
             ->get();
 
         $now = Carbon::createFromDate($tahun, $bulan, 1);
