@@ -75,7 +75,6 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
         $counter = 1;
 
         foreach ($this->data as $area => $items) {
-            // ✅ Tambah row judul area
             $rows[] = [$area];
 
             foreach ($items as $item) {
@@ -83,15 +82,17 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                     $counter++,
                     $item->pekerjaan,
                     $item->frequency_count . 'x ' . match($item->frequency_unit) {
-                        'per_hari' => 'per Hari',
-                        'per_x_hari' => 'per ' . $item->frequency_interval . ' Hari',
-                        'per_minggu' => 'per Minggu',
-                    },
+                        'per_hari'     => 'per Hari',
+                        'per_x_hari'   => 'per ' . $item->frequency_interval . ' Hari',
+                        'per_minggu'   => 'per Minggu',
+                        'per_x_minggu' => 'per ' . $item->frequency_interval . ' Minggu',
+                        'per_bulan'    => 'per Bulan',
+                    }
                 ];
 
                 for ($i = 1; $i <= $this->tanggalCount; $i++) {
                     foreach (['Pagi', 'Siang'] as $shift) {
-                        $row[] = ''; // kosong, akan diwarnai hijau di AfterSheet
+                        $row[] = '';
                     }
                 }
 
@@ -117,15 +118,14 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
             \Maatwebsite\Excel\Events\AfterSheet::class => function ($event) {
                 $sheet = $event->sheet->getDelegate();
 
-                $rowCount = 2; // header baris 1 & 2
+                $rowCount = 2;
                 foreach ($this->data as $area => $items) {
-                    $rowCount += 1; // row area
-                    $rowCount += count($items); // row checklist
+                    $rowCount += 1;
+                    $rowCount += count($items);
                 }
 
                 $colCount = 3 + ($this->tanggalCount * 2) + 1;
 
-                // ✅ Merge header tanggal
                 for ($i = 1; $i <= $this->tanggalCount; $i++) {
                     $startCol = 4 + (($i - 1) * 2);
                     $endCol = $startCol + 1;
@@ -134,14 +134,12 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                     $sheet->mergeCells("{$startLetter}1:{$endLetter}1");
                 }
 
-                // ✅ Merge header tetap
                 $sheet->mergeCells("A1:A2");
                 $sheet->mergeCells("B1:B2");
                 $sheet->mergeCells("C1:C2");
                 $lastCol = Coordinate::stringFromColumnIndex($colCount);
                 $sheet->mergeCells("{$lastCol}1:{$lastCol}2");
 
-                // ✅ Style umum tabel
                 $sheet->getStyle("A1:{$lastCol}{$rowCount}")
                     ->applyFromArray([
                         'alignment' => [
@@ -154,12 +152,10 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                         ],
                     ]);
 
-                // ✅ Tinggi baris default
                 for ($i = 1; $i <= $rowCount; $i++) {
                     $sheet->getRowDimension($i)->setRowHeight(25);
                 }
 
-                // ✅ Styling khusus baris area (bold + abu-abu)
                 $currentRow = 3;
                 foreach ($this->data as $area => $items) {
                     $lastCol = Coordinate::stringFromColumnIndex($colCount);
@@ -177,7 +173,6 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                     $currentRow++;
 
                     foreach ($items as $item) {
-                        // Warnai cell checklist
                         for ($i = 1; $i <= $this->tanggalCount; $i++) {
                             $date = Carbon::create($this->tahun, $this->bulan, $i)->format('Y-m-d');
                             foreach (['Pagi', 'Siang'] as $shiftIndex => $shift) {
