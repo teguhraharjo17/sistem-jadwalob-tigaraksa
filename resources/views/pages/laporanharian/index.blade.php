@@ -95,12 +95,16 @@
                                     @endif
                                 </td>
                                 @if(auth()->user()->hasRole('Admin'))
-                                    <td class="text-center">
+                                    <td class="text-center justify-content-center align-items-center flex-wrap">
                                         <button type="button" class="btn btn-xs btn-light border edit-btn"
                                             data-id="{{ $laporan->id }}"
                                             data-bs-toggle="modal"
                                             data-bs-target="#editLaporanModal">
                                             <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button type="button" class="btn btn-xs btn-light btn-delete-laporan"
+                                            data-id="{{ $laporan->id }}">
+                                            <i class="fas fa-trash-alt"></i> Hapus
                                         </button>
                                     </td>
                                 @endif
@@ -1140,6 +1144,38 @@
                     'cursor': 'zoom-in'
                 });
                 isZoomed = false;
+            });
+        });
+
+        $(document).on('click', '.btn-delete-laporan', function () {
+            const id = $(this).data('id');
+
+            Swal.fire({
+                title: 'Yakin ingin menghapus?',
+                text: 'Data yang dihapus tidak bisa dikembalikan.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "{{ route('laporanharian.destroy', ':id') }}".replace(':id', id),
+                        method: 'DELETE',
+                        data: {
+                            _token: '{{ csrf_token() }}'
+                        },
+                        success: function (res) {
+                            Swal.fire('Terhapus!', res.message, 'success').then(() => {
+                                location.reload();
+                            });
+                        },
+                        error: function () {
+                            Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus data.', 'error');
+                        }
+                    });
+                }
             });
         });
     </script>

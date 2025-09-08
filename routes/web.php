@@ -57,6 +57,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/pekerjaan-tersedia', [LaporanHarianController::class, 'getPekerjaanTersedia'])->name('pekerjaan-tersedia');
         Route::get('/export-excel', [LaporanHarianController::class, 'exportExcel'])->name('exportexcel');
         Route::post('/approval', [LaporanHarianController::class, 'storeApproval'])->name('storeapproval');
+        Route::delete('/{id}', [LaporanHarianController::class, 'destroy'])->name('destroy');
     });
 
     // ===========================

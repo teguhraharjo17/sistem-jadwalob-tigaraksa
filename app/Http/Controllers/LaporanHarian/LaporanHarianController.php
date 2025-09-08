@@ -385,4 +385,29 @@ class LaporanHarianController extends Controller
         return response()->json(['message' => 'Disetujui dan disimpan.', 'approval' => $approval]);
     }
 
+    public function destroy($id)
+    {
+        $laporan = LaporanHarian::findOrFail($id);
+
+        if ($laporan->paraf && Storage::disk('public')->exists($laporan->paraf)) {
+            Storage::disk('public')->delete($laporan->paraf);
+        }
+
+        if ($laporan->bukti) {
+            $buktiList = json_decode($laporan->bukti, true);
+            $buktiList = is_array($buktiList) ? $buktiList : [$laporan->bukti];
+
+            foreach ($buktiList as $filePath) {
+                if (Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
+                }
+            }
+        }
+
+        $laporan->delete();
+
+        return response()->json(['message' => 'Laporan berhasil dihapus.']);
+    }
+
+
 }
