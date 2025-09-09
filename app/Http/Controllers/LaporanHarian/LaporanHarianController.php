@@ -31,6 +31,7 @@ class LaporanHarianController extends Controller
             ->whereMonth('tanggal', $bulan)
             ->whereYear('tanggal', $tahun)
             ->orderBy('tanggal', 'desc')
+            ->orderBy('jam_selesai', 'desc')
             ->get();
 
         $now = Carbon::createFromDate($tahun, $bulan, 1);
