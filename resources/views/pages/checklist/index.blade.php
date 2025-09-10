@@ -423,7 +423,7 @@
         }
         .table-responsive {
             position: relative;
-            overflow: visible;
+            overflow: hidden;
         }
 
         .relative .dropdown-menu {
