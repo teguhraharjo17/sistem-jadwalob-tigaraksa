@@ -54,63 +54,6 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($laporanList as $index => $laporan)
-                            <tr>
-                                <td class="text-center">{{ $index + 1 }}</td>
-                                <td class="text-center">{{ \Carbon\Carbon::parse($laporan->tanggal)->format('d-m-Y') }}</td>
-                                <td class="text-center">{{ $laporan->jam_mulai }}</td>
-                                <td class="text-center">{{ $laporan->jam_selesai }}</td>
-                                <td class="text-start">{{ $laporan->checklist->pekerjaan ?? '-' }}</td>
-                                <td class="text-start">{{ $laporan->area ?? '-' }}</td>
-                                <td class="text-center">
-                                    @if ($laporan->bukti)
-                                        @php
-                                            $decoded = json_decode($laporan->bukti, true);
-                                            $buktiList = is_array($decoded) ? $decoded : [$laporan->bukti];
-                                        @endphp
-
-                                        @foreach ($buktiList as $bukti)
-                                            @php
-                                                $ext = pathinfo($bukti, PATHINFO_EXTENSION);
-                                                $url = asset('public/storage/'.$bukti);
-                                            @endphp
-
-                                            @if (in_array(strtolower($ext), ['jpg', 'jpeg', 'png']))
-                                                <img src="{{ $url }}" alt="Bukti" class="img-thumbnail me-1 mb-1" style="max-height: 100px;">
-                                            @elseif(strtolower($ext) === 'pdf')
-                                                <a href="{{ $url }}" target="_blank" class="badge bg-secondary d-block mb-1">Lihat PDF</a>
-                                            @endif
-                                        @endforeach
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                <td class="text-start">{{ $laporan->hasil_pekerjaan ?? '-' }}</td>
-                                <td class="text-start">{{ $laporan->mengetahui ?? '-' }}</td>
-                                <td class="text-center">
-                                    @if ($laporan->paraf)
-                                        <img src="{{ asset('public/storage/'.$laporan->paraf) }}" alt="Paraf" class="img-paraf-preview">
-                                    @else
-                                        -
-                                    @endif
-                                </td>
-                                @if(auth()->user()->hasRole('Admin'))
-                                    <td class="text-center justify-content-center align-items-center flex-wrap">
-                                        <button type="button" class="btn btn-xs btn-light border edit-btn"
-                                            data-id="{{ $laporan->id }}"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#editLaporanModal">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
-                                        <button type="button" class="btn btn-xs btn-light btn-delete-laporan"
-                                            data-id="{{ $laporan->id }}">
-                                            <i class="fas fa-trash-alt"></i> Hapus
-                                        </button>
-                                    </td>
-                                @endif
-                            </tr>
-                        @empty
-                        @endforelse
                     </tbody>
                 </table>
                 @if(count($jadwalHariIniPagi) || count($jadwalHariIniSiang))
@@ -707,7 +650,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.5/dist/signature_pad.umd.min.js"></script>
 
     <script>
         const editUrlTemplate = "{{ route('laporanharian.edit', ':id') }}";
@@ -768,14 +711,30 @@
             approvalPad = new SignaturePad(canvas);
 
             $('#tableLaporanHarian').DataTable({
+                processing: true,
+                serverSide: true,
+                ajax: "{{ route('laporanharian.data') }}",
                 scrollX: true,
                 paging: true,
                 searching: true,
                 ordering: false,
+                columns: [
+                    { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable:false, searchable:false },
+                    { data: 'tanggal', name: 'tanggal' },
+                    { data: 'jam_mulai', name: 'jam_mulai' },
+                    { data: 'jam_selesai', name: 'jam_selesai' },
+                    { data: 'pekerjaan', name: 'checklist.pekerjaan' },
+                    { data: 'area', name: 'area' },
+                    { data: 'bukti', name: 'bukti', orderable:false, searchable:false },
+                    { data: 'hasil_pekerjaan', name: 'hasil_pekerjaan' },
+                    { data: 'mengetahui', name: 'mengetahui' },
+                    { data: 'paraf', name: 'paraf', orderable:false, searchable:false },
+                    { data: 'opsi', name: 'opsi', orderable:false, searchable:false }
+                ],
                 dom: '<"row mb-3 align-items-center"' +
                     '<"col-md-6 d-flex align-items-center gap-2"B>' +
                     '<"col-md-6 text-end"f>>' +
-                    '<"row"<"col-sm-12 table-responsive"t>>' +
+                    '<"row"<"col-sm-12"t>>' +
                     '<"row mt-3"' +
                     '<"col-sm-6"l><"col-sm-6 text-end"p>>',
                 buttons: [
@@ -798,19 +757,10 @@
                         action: function () {
                             const bulan = $('#filter_bulan').val();
                             const tahun = $('#filter_tahun').val();
-                            const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}&ajax=true`;
-
-                            $.get(url, function (response) {
-                                if (response.needs_approval) {
-                                    $('#modalApproval').modal('show');
-                                    $('#approval_bulan').val(bulan);
-                                    $('#approval_tahun').val(tahun);
-                                } else {
-                                    window.location.href = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
-                                }
-                            });
+                            const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
+                            window.location.href = url;
                         }
-                    },
+                    }
                     @endif
                 ],
                 language: {
@@ -828,6 +778,12 @@
                     searchBox.wrap('<div class="input-group"></div>');
                     searchBox.before('<span class="input-group-text"><i class="fas fa-search"></i></span>');
                 }
+            });
+
+            $(document).on('click', '.bukti-thumb', function() {
+                const src = $(this).attr('src');
+                $('#modalPreviewImage').attr('src', src);
+                $('#imagePreviewModal').modal('show');
             });
 
             $('#item_pekerjaan').select2({

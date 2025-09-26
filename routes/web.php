@@ -58,6 +58,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/export-excel', [LaporanHarianController::class, 'exportExcel'])->name('exportexcel');
         Route::post('/approval', [LaporanHarianController::class, 'storeApproval'])->name('storeapproval');
         Route::delete('/{id}', [LaporanHarianController::class, 'destroy'])->name('destroy');
+        Route::get('/data', [LaporanHarianController::class, 'data'])->name('data');
     });
 
     // ===========================

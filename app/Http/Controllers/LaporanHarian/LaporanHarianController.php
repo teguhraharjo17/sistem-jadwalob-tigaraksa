@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use App\Exports\LaporanHarianExport;
 use Maatwebsite\Excel\Facades\Excel;
+use Yajra\DataTables\Facades\DataTables;
 
 class LaporanHarianController extends Controller
 {
@@ -68,6 +69,43 @@ class LaporanHarianController extends Controller
             'jadwalHariIniPagi',
             'jadwalHariIniSiang'
         ));
+    }
+
+    public function data(Request $request)
+    {
+        $laporan = LaporanHarian::with('checklist')->orderBy('tanggal','desc');
+
+        return DataTables::of($laporan)
+            ->addIndexColumn()
+            ->editColumn('tanggal', fn($row) => \Carbon\Carbon::parse($row->tanggal)->format('d-m-Y'))
+            ->addColumn('pekerjaan', fn($row) => $row->checklist->pekerjaan ?? '-')
+            ->editColumn('bukti', function($row) {
+                if (!$row->bukti) return '-';
+                $decoded = json_decode($row->bukti, true);
+                $buktiList = is_array($decoded) ? $decoded : [$row->bukti];
+
+                return collect($buktiList)->map(function($b) {
+                    $url = asset('storage/'.$b);
+                    return "<img src='$url' loading='lazy' class='img-thumbnail bukti-thumb me-1 mb-1' style='max-height:80px; cursor:pointer'>";
+                })->implode('');
+            })
+            ->editColumn('paraf', function($row) {
+                return $row->paraf
+                    ? "<img src='".asset('storage/'.$row->paraf)."' loading='lazy' class='img-thumbnail img-paraf-preview' style='max-height:50px;'>"
+                    : '-';
+            })
+            ->addColumn('opsi', function($row) {
+                return '
+                    <button class="btn btn-xs btn-light border edit-btn" data-id="'.$row->id.'">
+                        <i class="fas fa-edit"></i> Edit
+                    </button>
+                    <button class="btn btn-xs btn-light btn-delete-laporan" data-id="'.$row->id.'">
+                        <i class="fas fa-trash-alt"></i> Hapus
+                    </button>
+                ';
+            })
+            ->rawColumns(['bukti','paraf','opsi'])
+            ->make(true);
     }
 
     public function store(Request $request)
