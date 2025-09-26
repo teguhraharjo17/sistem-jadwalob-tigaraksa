@@ -36,7 +36,7 @@
                     $totalColspan = 1 + 1 + 1 + ($daysInMonth * 2) + 1;
                 @endphp
 
-                <table id="tablechecklist" class="table table-bordered table-striped">
+                <table id="tablechecklist" class="table table-bordered table-striped" style="width:100%">
                     <thead>
                         <tr>
                             <th class="text-start" style="display:none">Area</th>
@@ -628,15 +628,25 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.datatables.net/rowgroup/1.1.5/js/dataTables.rowGroup.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedcolumns/5.0.5/js/fixedColumns.dataTables.js"></script>
+    <script src="https://cdn.datatables.net/fixedcolumns/5.0.5/js/dataTables.fixedColumns.js"></script>
     <script>
         $(document).ready(function () {
             $('#tablechecklist').DataTable({
                 scrollX: true,
+                scrollCollapse: true,
                 paging: true,
                 searching: true,
+                scrollY: 300,
                 ordering: false,
                 rowGroup: {
                     dataSrc: 0
+                },
+                fixedColumns: {
+                    left: 3
+                },
+                fixedHeader: {
+                    header: true
                 },
                 rowCallback: function(row, data, index) {
                     if ($(row).hasClass('area-header-row')) {
@@ -653,7 +663,7 @@
                 dom: '<"row mb-3 align-items-center"' +
                     '<"col-md-6 d-flex align-items-center gap-2"B>' +
                     '<"col-md-6 text-end"f>>' +
-                    '<"row"<"col-sm-12 table-responsive"t>>' +
+                    '<"row"<"col-sm-12"t>>' +
                     '<"row mt-3"' +
                     '<"col-sm-6"l><"col-sm-6 text-end"p>>',
                 buttons: [
