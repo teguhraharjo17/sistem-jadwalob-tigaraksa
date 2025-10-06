@@ -73,7 +73,13 @@ class LaporanHarianController extends Controller
 
     public function data(Request $request)
     {
-        $laporan = LaporanHarian::with('checklist')->orderBy('tanggal','desc');
+        $bulan = $request->input('bulan', now()->month);
+        $tahun = $request->input('tahun', now()->year);
+
+        $laporan = LaporanHarian::with('checklist')
+            ->whereMonth('tanggal', $bulan)
+            ->whereYear('tanggal', $tahun)
+            ->orderBy('tanggal','desc');
 
         return DataTables::of($laporan)
             ->addIndexColumn()

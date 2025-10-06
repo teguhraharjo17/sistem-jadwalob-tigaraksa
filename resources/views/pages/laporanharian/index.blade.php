@@ -713,7 +713,13 @@
             $('#tableLaporanHarian').DataTable({
                 processing: true,
                 serverSide: true,
-                ajax: "{{ route('laporanharian.data') }}",
+                ajax: {
+                    url: "{{ route('laporanharian.data') }}",
+                    data: function (d) {
+                        d.bulan = $('#filter_bulan').val();
+                        d.tahun = $('#filter_tahun').val();
+                    }
+                },
                 scrollX: true,
                 paging: true,
                 searching: true,
