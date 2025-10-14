@@ -735,7 +735,9 @@
                     { data: 'hasil_pekerjaan', name: 'hasil_pekerjaan' },
                     { data: 'mengetahui', name: 'mengetahui' },
                     { data: 'paraf', name: 'paraf', orderable:false, searchable:false },
-                    { data: 'opsi', name: 'opsi', orderable:false, searchable:false }
+                    @if(auth()->user()->hasRole('Admin'))
+                        { data: 'opsi', name: 'opsi', orderable:false, searchable:false },
+                    @endif
                 ],
                 dom: '<"row mb-3 align-items-center"' +
                     '<"col-md-6 d-flex align-items-center gap-2"B>' +
