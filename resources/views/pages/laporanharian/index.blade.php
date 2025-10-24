@@ -765,8 +765,26 @@
                         action: function () {
                             const bulan = $('#filter_bulan').val();
                             const tahun = $('#filter_tahun').val();
-                            const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
-                            window.location.href = url;
+
+                            // Check approval status via AJAX
+                            $.get("{{ route('laporanharian.exportexcel') }}", {
+                                bulan,
+                                tahun,
+                                ajax: true
+                            }).done(function (res) {
+                                if (res.needs_approval) {
+                                    // Tampilkan modal approval
+                                    $('#approval_bulan').val(bulan);
+                                    $('#approval_tahun').val(tahun);
+                                    $('#modalApproval').modal('show');
+                                } else {
+                                    // Langsung download
+                                    const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
+                                    window.location.href = url;
+                                }
+                            }).fail(function () {
+                                Swal.fire('Gagal', 'Terjadi kesalahan saat mengecek approval.', 'error');
+                            });
                         }
                     }
                     @endif
