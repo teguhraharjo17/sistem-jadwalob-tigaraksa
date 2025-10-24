@@ -14,6 +14,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
+use Illuminate\Support\Facades\Http;
 
 class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents, WithColumnWidths
 {
@@ -119,13 +120,13 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                 $sheet = $event->sheet->getDelegate();
 
                 $rowCount = 2;
-                foreach ($this->data as $area => $items) {
-                    $rowCount += 1;
-                    $rowCount += count($items);
+                foreach ($this->data as $items) {
+                    $rowCount += 1 + count($items);
                 }
 
                 $colCount = 3 + ($this->tanggalCount * 2) + 1;
 
+                // Merge header
                 for ($i = 1; $i <= $this->tanggalCount; $i++) {
                     $startCol = 4 + (($i - 1) * 2);
                     $endCol = $startCol + 1;
@@ -140,6 +141,7 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                 $lastCol = Coordinate::stringFromColumnIndex($colCount);
                 $sheet->mergeCells("{$lastCol}1:{$lastCol}2");
 
+                // Apply border + center
                 $sheet->getStyle("A1:{$lastCol}{$rowCount}")
                     ->applyFromArray([
                         'alignment' => [
@@ -156,7 +158,17 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                     $sheet->getRowDimension($i)->setRowHeight(25);
                 }
 
+                // Hari libur
+                $holidays = Http::get('http://192.168.0.8:8000/api/libur')
+                    ->successful()
+                    ? collect(Http::get('http://192.168.0.8:8000/api/libur')->json())
+                        ->pluck('tanggal')
+                        ->map(fn($t) => Carbon::parse($t)->format('Y-m-d'))
+                        ->toArray()
+                    : [];
+
                 $currentRow = 3;
+
                 foreach ($this->data as $area => $items) {
                     $lastCol = Coordinate::stringFromColumnIndex($colCount);
                     $sheet->mergeCells("A{$currentRow}:{$lastCol}{$currentRow}");
@@ -175,17 +187,38 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                     foreach ($items as $item) {
                         for ($i = 1; $i <= $this->tanggalCount; $i++) {
                             $date = Carbon::create($this->tahun, $this->bulan, $i)->format('Y-m-d');
+                            $isWeekend = in_array(Carbon::parse($date)->dayOfWeek, [Carbon::SATURDAY, Carbon::SUNDAY]);
+                            $isHoliday = in_array($date, $holidays);
+
                             foreach (['Pagi', 'Siang'] as $shiftIndex => $shift) {
                                 $key = $item->id . '_' . $date . '_' . $shift;
                                 $status = $this->statusMap[$key] ?? 0;
                                 $paraf = $this->parafMap[$key] ?? false;
 
-                                if ($status && $paraf) {
-                                    $colIndex = 4 + (($i - 1) * 2) + $shiftIndex;
-                                    $colLetter = Coordinate::stringFromColumnIndex($colIndex);
-                                    $sheet->getStyle($colLetter . $currentRow)->getFill()->applyFromArray([
+                                $colIndex = 4 + (($i - 1) * 2) + $shiftIndex;
+                                $cell = Coordinate::stringFromColumnIndex($colIndex) . $currentRow;
+
+                                // 🔴 Hari libur
+                                if ($isHoliday || $isWeekend) {
+                                    $sheet->getStyle($cell)->getFill()->applyFromArray([
                                         'fillType' => Fill::FILL_SOLID,
-                                        'color' => ['rgb' => '92D050'],
+                                        'color' => ['rgb' => 'FFE5E5'], // Light red
+                                    ]);
+                                }
+
+                                // ✅ Sudah dikerjakan dan paraf ✔️
+                                if ($status && $paraf) {
+                                    $sheet->getStyle($cell)->getFill()->applyFromArray([
+                                        'fillType' => Fill::FILL_SOLID,
+                                        'color' => ['rgb' => '92D050'], // Green
+                                    ]);
+                                }
+
+                                // 🔵 Dijadwalkan tapi belum selesai (status 0)
+                                elseif (isset($this->statusMap[$key]) && !$status) {
+                                    $sheet->getStyle($cell)->getFill()->applyFromArray([
+                                        'fillType' => Fill::FILL_SOLID,
+                                        'color' => ['rgb' => '00B0F0'], // Blue
                                     ]);
                                 }
                             }
@@ -194,9 +227,36 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                         $currentRow++;
                     }
                 }
+                // Tambahkan keterangan warna di bawah tabel
+                $legendStartRow = $rowCount + 2;
+
+                $sheet->setCellValue("B{$legendStartRow}", "Keterangan Warna:");
+                $sheet->getStyle("B{$legendStartRow}")->getFont()->setBold(true);
+
+                // Hijau (✔️ Sudah dikerjakan dan paraf)
+                $sheet->setCellValue("C" . ($legendStartRow + 1), "✔️ Selesai & Paraf");
+                $sheet->getStyle("B" . ($legendStartRow + 1))->getFill()->applyFromArray([
+                    'fillType' => Fill::FILL_SOLID,
+                    'color' => ['rgb' => '92D050'], // Green
+                ]);
+
+                // Biru (📅 Dijadwalkan, tapi belum dikerjakan)
+                $sheet->setCellValue("C" . ($legendStartRow + 2), "📅 Dijadwalkan, belum selesai");
+                $sheet->getStyle("B" . ($legendStartRow + 2))->getFill()->applyFromArray([
+                    'fillType' => Fill::FILL_SOLID,
+                    'color' => ['rgb' => '00B0F0'], // Blue
+                ]);
+
+                // Merah (🔴 Hari Libur / Weekend)
+                $sheet->setCellValue("C" . ($legendStartRow + 3), "🔴 Hari Libur / Akhir Pekan");
+                $sheet->getStyle("B" . ($legendStartRow + 3))->getFill()->applyFromArray([
+                    'fillType' => Fill::FILL_SOLID,
+                    'color' => ['rgb' => 'FFE5E5'], // Red
+                ]);
             }
         ];
     }
+
 
     public function columnWidths(): array
     {

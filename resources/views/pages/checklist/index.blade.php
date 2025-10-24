@@ -154,6 +154,21 @@
                     </div>
                 @endif
             </div>
+            <div class="mt-3 p-3 bg-light border rounded w-100" style="max-width: 600px;">
+                <h6 class="fw-bold">Keterangan Warna:</h6>
+                <div class="d-flex align-items-center mb-2">
+                    <div class="me-2" style="width: 30px; height: 20px; background-color: #92D050; border: 1px solid #ccc;"></div>
+                    <span>Selesai & Paraf</span>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                    <div class="me-2" style="width: 30px; height: 20px; background-color: #00B0F0; border: 1px solid #ccc;"></div>
+                    <span>Dijadwalkan, belum selesai</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="me-2" style="width: 30px; height: 20px; background-color: #FFE5E5; border: 1px solid #ccc;"></div>
+                    <span>Hari Libur / Akhir Pekan</span>
+                </div>
+            </div>
         </div>
         <!-- Modal Tambah Jadwal OB -->
         <div class="modal fade" id="addJadwalOB" tabindex="-1" aria-labelledby="addJadwalOBLabel" aria-hidden="true">
