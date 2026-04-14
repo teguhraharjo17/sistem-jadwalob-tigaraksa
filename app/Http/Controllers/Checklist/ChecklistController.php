@@ -10,8 +10,6 @@ use Illuminate\Support\Carbon;
 use \Illuminate\Http\Request;
 use App\Exports\ChecklistExport;
 use Maatwebsite\Excel\Facades\Excel;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
 use App\Services\MileniaApiService;
 
 class ChecklistController extends Controller
@@ -60,14 +58,7 @@ class ChecklistController extends Controller
             })->toArray();
 
         $holidayData = $this->mileniaApi->getHolidays();
-        $isCached = Cache::has('milenia_holidays');
-        
-        $apiDiagnostics = [
-            'url' => config('services.milenia.base_url'),
-            'cached' => $isCached,
-            'count' => count($holidayData),
-            'server_time' => now()->toDateTimeString(),
-        ];
+        $apiDiagnostics = $this->mileniaApi->getDiagnostics(count($holidayData));
 
         $holidayData = collect($holidayData);
 

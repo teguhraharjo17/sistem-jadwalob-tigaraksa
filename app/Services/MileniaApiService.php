@@ -10,6 +10,7 @@ class MileniaApiService
 {
     protected ?string $baseUrl;
     protected ?string $token;
+    protected ?string $lastError = null;
 
     public function __construct()
     {
@@ -24,54 +25,66 @@ class MileniaApiService
      */
     public function getHolidays(): array
     {
+        $this->lastError = null;
+
         if (!$this->baseUrl || !$this->token) {
-            Log::warning("Milenia API configuration is incomplete. URL or Token is missing.");
+            $this->lastError = 'Milenia API configuration is incomplete. URL or token is missing.';
+            Log::warning($this->lastError);
             return [];
         }
 
-        return Cache::remember('milenia_holidays', now()->addDays(7), function () {
-            Log::info("Attempting to fetch holidays from Milenia API: {$this->baseUrl}");
-            try {
-                $allData = [];
-                $currentPage = 1;
-                $lastPage = 1;
+        if (Cache::has('milenia_holidays')) {
+            return Cache::get('milenia_holidays', []);
+        }
 
-                do {
-                    Log::info("Fetching page {$currentPage} from Milenia API...");
-                    
-                    $startTime = microtime(true);
-                    $response = Http::timeout(10)->withToken($this->token)
-                        ->acceptJson()
-                        ->get("{$this->baseUrl}/libur", ['page' => $currentPage]);
-                    $duration = round(microtime(true) - $startTime, 2);
+        Log::info("Attempting to fetch holidays from Milenia API: {$this->baseUrl}");
 
-                    if (!$response->successful()) {
-                        Log::error("Milenia API error on page {$currentPage} (Status: " . $response->status() . "): " . $response->body());
-                        break;
-                    }
+        try {
+            $allData = [];
+            $currentPage = 1;
+            $lastPage = 1;
 
-                    Log::info("Page {$currentPage} fetched successfully in {$duration}s. Records in page: " . count($response->json()['data'] ?? []));
+            do {
+                Log::info("Fetching page {$currentPage} from Milenia API...");
 
-                    $json = $response->json();
-                    
-                    // Extract data array
-                    $pageData = isset($json['data']) && is_array($json['data']) ? $json['data'] : [];
-                    $allData = array_merge($allData, $pageData);
+                $startTime = microtime(true);
+                $response = Http::timeout(10)->withToken($this->token)
+                    ->acceptJson()
+                    ->get("{$this->baseUrl}/libur", ['page' => $currentPage]);
+                $duration = round(microtime(true) - $startTime, 2);
 
-                    // Handle pagination logic
-                    $lastPage = $json['last_page'] ?? 1;
-                    $currentPage++;
+                if (!$response->successful()) {
+                    $this->lastError = "Milenia API returned HTTP {$response->status()} on page {$currentPage}.";
+                    Log::error($this->lastError . ' Body: ' . $response->body());
+                    return [];
+                }
 
-                } while ($currentPage <= $lastPage);
+                $json = $response->json();
 
-                Log::info("Total holidays fetched: " . count($allData));
-                return $allData;
+                Log::info("Page {$currentPage} fetched successfully in {$duration}s. Records in page: " . count($json['data'] ?? []));
 
-            } catch (\Exception $e) {
-                Log::error("Milenia API Exception (Server IP: " . request()->ip() . "): " . $e->getMessage());
-                return [];
+                $pageData = isset($json['data']) && is_array($json['data']) ? $json['data'] : [];
+                $allData = array_merge($allData, $pageData);
+
+                $lastPage = $json['last_page'] ?? 1;
+                $currentPage++;
+            } while ($currentPage <= $lastPage);
+
+            Log::info("Total holidays fetched: " . count($allData));
+
+            if (!empty($allData)) {
+                Cache::put('milenia_holidays', $allData, now()->addDays(7));
+            } else {
+                $this->lastError = 'Milenia API returned an empty holiday dataset.';
+                Log::warning($this->lastError);
             }
-        });
+
+            return $allData;
+        } catch (\Exception $e) {
+            $this->lastError = $e->getMessage();
+            Log::error("Milenia API Exception (Server IP: " . request()->ip() . "): " . $e->getMessage());
+            return [];
+        }
     }
 
     /**
@@ -82,5 +95,17 @@ class MileniaApiService
     public function clearHolidaysCache(): void
     {
         Cache::forget('milenia_holidays');
+    }
+
+    public function getDiagnostics(int $count = 0): array
+    {
+        return [
+            'url' => $this->baseUrl,
+            'token_configured' => filled($this->token),
+            'cached' => Cache::has('milenia_holidays'),
+            'count' => $count,
+            'server_time' => now()->toDateTimeString(),
+            'last_error' => $this->lastError,
+        ];
     }
 }
