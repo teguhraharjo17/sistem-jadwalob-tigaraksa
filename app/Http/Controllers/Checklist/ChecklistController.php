@@ -11,6 +11,7 @@ use \Illuminate\Http\Request;
 use App\Exports\ChecklistExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use App\Services\MileniaApiService;
 
 class ChecklistController extends Controller

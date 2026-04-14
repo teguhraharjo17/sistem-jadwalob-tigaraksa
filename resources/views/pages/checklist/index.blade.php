@@ -814,6 +814,13 @@
                 dropdownParent: $('#addJadwalOB')
             });
 
+            $('#edit_area').select2({
+                tags: true,
+                placeholder: "Pilih atau ketik area",
+                width: '100%',
+                dropdownParent: $('#editJadwalOB')
+            });
+
             // API Diagnostic Logs for Troubleshooting
             const apiStatus = @json($apiDiagnostics ?? []);
             console.group('%c 🔍 Milenia API Diagnostic Details', 'background: #222; color: #bada55; padding: 5px; font-weight: bold;');
@@ -826,11 +833,6 @@
                 console.warn('%c ⚠️ No holiday records found! Check if the API URL is reachable from the server.', 'color: orange; font-weight: bold;');
             }
             console.groupEnd();
-                tags: true,
-                placeholder: "Pilih atau ketik area",
-                width: '100%',
-                dropdownParent: $('#editJadwalOB')
-            });
 
             // Loading State Helper
             const setBtnLoading = (form, isLoading) => {
