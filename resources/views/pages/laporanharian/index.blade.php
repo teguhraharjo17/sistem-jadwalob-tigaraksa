@@ -1,16 +1,51 @@
 <x-default-layout>
     @section('title', 'Laporan Kerja Harian')
 
-    <div class="container py-4">
-        <h1 class="text-center mb-4">
-            <span class="highlight-title">Laporan Kerja Harian</span>
-        </h1>
+    @php
+        $totalJadwalHariIni = count($jadwalHariIniPagi) + count($jadwalHariIniSiang);
+        $totalSelesaiHariIni = collect($jadwalHariIniPagi)->where('status', 1)->count() + collect($jadwalHariIniSiang)->where('status', 1)->count();
+    @endphp
 
-        <div class="p-4 rounded shadow-sm bg-white">
-            <form method="GET" action="{{ route('laporanharian.index') }}" id="filterForm" class="row g-3 mb-4">
-                <div class="col-md-3">
+    <div class="container py-4 py-lg-5">
+        <section class="hero-laporan mb-4">
+            <div>
+                <h1 class="hero-laporan__title">Laporan Kerja Harian</h1>
+                <p class="hero-laporan__subtitle mb-0">Menu ini digunakan untuk melihat, menambah, mengubah, dan mengekspor laporan kerja harian.</p>
+            </div>
+
+            <div class="hero-laporan__stats">
+                <div class="hero-stat-card">
+                    <span>Periode</span>
+                    <strong>{{ $now->translatedFormat('F Y') }}</strong>
+                </div>
+                <div class="hero-stat-card">
+                    <span>Pekerjaan Aktif</span>
+                    <strong>{{ count($pekerjaanList) }}</strong>
+                </div>
+                <div class="hero-stat-card">
+                    <span>Jadwal Hari Ini</span>
+                    <strong>{{ $totalJadwalHariIni }}</strong>
+                </div>
+                <div class="hero-stat-card">
+                    <span>Selesai Hari Ini</span>
+                    <strong>{{ $totalSelesaiHariIni }}</strong>
+                </div>
+            </div>
+        </section>
+
+        <div class="p-4 p-lg-5 rounded-4 shadow-sm bg-white laporan-shell">
+            <form method="GET" action="{{ route('laporanharian.index') }}" id="filterForm" class="row g-3 align-items-end mb-4">
+                <div class="col-lg-6">
+                    <div class="section-copy">
+                        <span class="section-kicker">Filter Laporan</span>
+                        <h2 class="section-title">Pilih periode kerja</h2>
+                        <p class="text-muted mb-0">Tabel, jadwal, dan ekspor akan menyesuaikan bulan serta tahun yang dipilih.</p>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-2">
                     <label for="filter_bulan" class="form-label">Bulan</label>
-                    <select id="filter_bulan" name="bulan" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                    <select id="filter_bulan" name="bulan" class="form-select">
                         @for ($i = 1; $i <= 12; $i++)
                             <option value="{{ $i }}" {{ $now->month == $i ? 'selected' : '' }}>
                                 {{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}
@@ -19,9 +54,9 @@
                     </select>
                 </div>
 
-                <div class="col-md-3">
+                <div class="col-sm-6 col-lg-2">
                     <label for="filter_tahun" class="form-label">Tahun</label>
-                    <select id="filter_tahun" name="tahun" class="form-select" onchange="document.getElementById('filterForm').submit()">
+                    <select id="filter_tahun" name="tahun" class="form-select">
                         @for ($i = now()->year; $i >= now()->year - 5; $i--)
                             <option value="{{ $i }}" {{ $now->year == $i ? 'selected' : '' }}>
                                 {{ $i }}
@@ -29,7 +64,95 @@
                         @endfor
                     </select>
                 </div>
+
+                <div class="col-lg-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Terapkan
+                    </button>
+                </div>
             </form>
+            <div class="row g-4 mb-4">
+                <div class="col-xl-8">
+                    <div class="schedule-card">
+                        <div class="schedule-card__head">
+                            <div>
+                                <span class="section-kicker">Hari Ini</span>
+                                <h3 class="section-title mb-1">Jadwal pekerjaan aktif</h3>
+                                <p class="text-muted mb-0">{{ \Carbon\Carbon::today()->translatedFormat('l, d F Y') }}</p>
+                            </div>
+                            <span class="schedule-badge">{{ $totalSelesaiHariIni }}/{{ $totalJadwalHariIni ?: 0 }} selesai</span>
+                        </div>
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="shift-card">
+                                    <div class="shift-card__title">
+                                        <strong>Shift Pagi</strong>
+                                        <span>{{ count($jadwalHariIniPagi) }} tugas</span>
+                                    </div>
+                                    @if(count($jadwalHariIniPagi))
+                                        <div class="shift-card__list">
+                                            @foreach ($jadwalHariIniPagi as $item)
+                                                <div class="shift-task {{ $item['status'] == 1 ? 'is-done' : '' }}">
+                                                    <i class="fas {{ $item['status'] == 1 ? 'fa-check-circle' : 'fa-clock' }}"></i>
+                                                    <span>{{ $item['pekerjaan'] }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="shift-card__empty">Tidak ada jadwal untuk shift pagi.</div>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="shift-card">
+                                    <div class="shift-card__title">
+                                        <strong>Shift Siang</strong>
+                                        <span>{{ count($jadwalHariIniSiang) }} tugas</span>
+                                    </div>
+                                    @if(count($jadwalHariIniSiang))
+                                        <div class="shift-card__list">
+                                            @foreach ($jadwalHariIniSiang as $item)
+                                                <div class="shift-task {{ $item['status'] == 1 ? 'is-done' : '' }}">
+                                                    <i class="fas {{ $item['status'] == 1 ? 'fa-check-circle' : 'fa-clock' }}"></i>
+                                                    <span>{{ $item['pekerjaan'] }}</span>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <div class="shift-card__empty">Tidak ada jadwal untuk shift siang.</div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4">
+                    <div class="quick-guide">
+                        <span class="section-kicker">Panduan Cepat</span>
+                        <h3 class="section-title mb-3">Alur yang paling sering dipakai</h3>
+                        <div class="guide-point">
+                            <span>1</span>
+                            <div>Pilih periode agar data tabel dan ekspor sesuai.</div>
+                        </div>
+                        <div class="guide-point">
+                            <span>2</span>
+                            <div>Pilih tanggal dan shift dulu saat menambah laporan.</div>
+                        </div>
+                        <div class="guide-point">
+                            <span>3</span>
+                            <div>Upload bukti seperlunya dengan preview yang lebih ringan.</div>
+                        </div>
+                        <div class="guide-point">
+                            <span>4</span>
+                            <div>Approval baru diminta saat ekspor diperlukan.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table id="tableLaporanHarian" class="table table-bordered table-striped">
                     <thead>
@@ -56,48 +179,6 @@
                     <tbody>
                     </tbody>
                 </table>
-                @if(count($jadwalHariIniPagi) || count($jadwalHariIniSiang))
-                    <div class="alert alert-info mt-4">
-                        <h6 class="fw-bold">
-                            <i class="fas fa-calendar-day text-primary"></i>
-                            Jadwal Pekerjaan Hari Ini ({{ \Carbon\Carbon::today()->translatedFormat('l, d M Y') }})
-                        </h6>
-
-                        <div class="ms-3 mb-2">
-                            <strong>Shift Pagi:</strong>
-                            @if(count($jadwalHariIniPagi))
-                                <ul class="mb-2">
-                                    @foreach ($jadwalHariIniPagi as $item)
-                                        <li>
-                                            @if($item['status'] == 1)
-                                                ✅
-                                            @endif
-                                            {{ $item['pekerjaan'] }}
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @else
-                                <p class="mb-2">Tidak ada jadwal.</p>
-                            @endif
-
-                            <strong>Shift Siang:</strong>
-                            @if(count($jadwalHariIniSiang))
-                                <ul class="mb-0">
-                                    @foreach ($jadwalHariIniSiang as $item)
-                                        <li>
-                                            @if($item['status'] == 1)
-                                                ✅
-                                            @endif
-                                            {{ $item['pekerjaan'] }}
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @else
-                                <p class="mb-0">Tidak ada jadwal.</p>
-                            @endif
-                        </div>
-                    </div>
-                @endif
             </div>
         </div>
 
@@ -177,22 +258,20 @@
                                     </thead>
                                     <tbody id="buktiUploadBody">
                                         <tr>
-                                            <tr>
-                                                <td>
-                                                    <input type="file" name="bukti[]" accept="image/*,application/pdf" capture="environment" class="form-control mb-1" required onchange="previewFile(this, 'preview_default')">
-                                                    <div id="preview_default" class="mt-1"></div>
-                                                </td>
-                                                <td class="text-center">
-                                                    <button type="button" class="btn btn-sm btn-danger" onclick="removeBuktiRow(this)">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
+                                            <td>
+                                                <input type="file" name="bukti[]" accept="image/*,application/pdf" capture="environment" class="form-control mb-1 proof-input" required onchange="previewFile(this, 'preview_default')">
+                                                <div id="preview_default" class="mt-1 proof-preview"></div>
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="removeBuktiRow(this)">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
 
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="addBuktiRow()">+ Tambah Baris Bukti</button>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="addBuktiRow()">+ Tambah Bukti</button>
                             </div>
                         </div>
 
@@ -644,6 +723,213 @@
             max-width: 100%;
             height: auto;
         }
+
+        .laporan-shell {
+            border: 1px solid #e6edf5;
+        }
+
+        .hero-laporan {
+            display: grid;
+            grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+            gap: 1.5rem;
+            padding: 2rem;
+            border-radius: 28px;
+            background:
+                radial-gradient(circle at top right, rgba(249, 115, 22, 0.14), transparent 30%),
+                linear-gradient(135deg, #0f172a 0%, #155e75 55%, #f8fafc 145%);
+            color: #f8fafc;
+            box-shadow: 0 18px 50px rgba(15, 23, 42, 0.16);
+        }
+
+        .hero-laporan__tag,
+        .section-kicker {
+            display: inline-block;
+            margin-bottom: 0.55rem;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .hero-laporan__tag {
+            padding: 0.45rem 0.85rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+
+        .section-kicker {
+            color: #0c7489;
+        }
+
+        .hero-laporan__title {
+            margin-bottom: 0.75rem;
+            color: #fff;
+            font-size: clamp(2rem, 3vw, 3rem);
+            font-weight: 800;
+            line-height: 1.1;
+        }
+
+        .hero-laporan__subtitle {
+            max-width: 760px;
+            color: rgba(248, 250, 252, 0.84);
+        }
+
+        .hero-laporan__stats {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .hero-stat-card {
+            padding: 1rem 1.1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(8px);
+        }
+
+        .hero-stat-card span {
+            display: block;
+            margin-bottom: 0.35rem;
+            color: rgba(248, 250, 252, 0.74);
+            font-size: 0.82rem;
+        }
+
+        .hero-stat-card strong {
+            font-size: 1.35rem;
+            font-weight: 800;
+        }
+
+        .section-copy .section-title {
+            margin-bottom: 0.35rem;
+            color: #122033;
+            font-size: 1.4rem;
+            font-weight: 800;
+        }
+
+        .schedule-card,
+        .quick-guide {
+            height: 100%;
+            padding: 1.35rem;
+            border: 1px solid #dde7f2;
+            border-radius: 24px;
+            background: linear-gradient(180deg, #fff 0%, #f8fbff 100%);
+        }
+
+        .schedule-card__head,
+        .shift-card__title {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .schedule-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.45rem 0.85rem;
+            border-radius: 999px;
+            background: #ecfeff;
+            color: #0f766e;
+            font-size: 0.84rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .shift-card {
+            height: 100%;
+            padding: 1rem;
+            border-radius: 18px;
+            background: #f8fafc;
+        }
+
+        .shift-card__title {
+            margin-bottom: 0.85rem;
+            align-items: center;
+        }
+
+        .shift-card__title span {
+            color: #66758b;
+            font-size: 0.84rem;
+            font-weight: 700;
+        }
+
+        .shift-card__list {
+            display: grid;
+            gap: 0.7rem;
+        }
+
+        .shift-task {
+            display: flex;
+            gap: 0.7rem;
+            align-items: flex-start;
+            padding: 0.85rem 0.9rem;
+            border-radius: 14px;
+            background: #eef2f7;
+            color: #122033;
+            font-weight: 600;
+        }
+
+        .shift-task.is-done {
+            background: #ecfdf5;
+            color: #166534;
+        }
+
+        .shift-card__empty {
+            padding: 0.9rem 1rem;
+            border-radius: 14px;
+            background: #eef2f7;
+            color: #66758b;
+        }
+
+        .guide-point {
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-start;
+            padding: 0.95rem 1rem;
+            border-radius: 16px;
+            background: #f8fafc;
+            color: #475569;
+        }
+
+        .guide-point + .guide-point {
+            margin-top: 0.75rem;
+        }
+
+        .guide-point span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #0c7489;
+            color: #fff;
+            font-weight: 800;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 1199.98px) {
+            .hero-laporan {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .hero-laporan {
+                padding: 1.4rem;
+            }
+
+            .hero-laporan__stats {
+                grid-template-columns: 1fr;
+            }
+
+            .schedule-card__head,
+            .shift-card__title {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
     </style>
 
     <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
@@ -655,6 +941,7 @@
     <script>
         const editUrlTemplate = "{{ route('laporanharian.edit', ':id') }}";
         const updateUrlTemplate = "{{ route('laporanharian.update', ':id') }}";
+        const storageBaseUrl = @json(asset('storage'));
         let editSignaturePad;
         let approvalPad;
 
@@ -669,19 +956,38 @@
         function loadPekerjaanList(tanggal, shift) {
             if (!tanggal || !shift) return;
 
+            const hint = document.getElementById('jobPickerHint');
+            if (hint) {
+                hint.textContent = 'Memuat item pekerjaan yang tersedia...';
+                hint.classList.remove('text-danger');
+            }
+
             $.get(`{{ route('laporanharian.pekerjaan-tersedia') }}`, { tanggal, shift }, function (data) {
                 let $pekerjaanSelect = $('#item_pekerjaan');
                 $pekerjaanSelect.empty().append('<option value="" disabled selected>Pilih Item Pekerjaan</option>');
 
                 if (data.length === 0) {
                     $pekerjaanSelect.append('<option value="" disabled>Tidak ada pekerjaan</option>');
+                    if (hint) {
+                        hint.textContent = 'Tidak ada pekerjaan terjadwal pada tanggal dan shift yang dipilih.';
+                        hint.classList.add('text-danger');
+                    }
                 } else {
                     data.forEach(item => {
                         $pekerjaanSelect.append(`<option value="${item.id}">${item.pekerjaan}</option>`);
                     });
+                    if (hint) {
+                        hint.textContent = `${data.length} item pekerjaan tersedia untuk dipilih.`;
+                        hint.classList.remove('text-danger');
+                    }
                 }
 
                 $pekerjaanSelect.trigger('change');
+            }).fail(function () {
+                if (hint) {
+                    hint.textContent = 'Gagal memuat item pekerjaan. Silakan coba lagi.';
+                    hint.classList.add('text-danger');
+                }
             });
         }
 
@@ -701,6 +1007,11 @@
         // Optional: saat modal dibuka, kosongkan pekerjaan
         $('#addLaporanHarian').on('show.bs.modal', function () {
             $('#item_pekerjaan').empty().append('<option value="" disabled selected>Silakan pilih tanggal dan shift terlebih dahulu</option>');
+            const hint = document.getElementById('jobPickerHint');
+            if (hint) {
+                hint.textContent = 'Pilih tanggal dan shift untuk memuat item pekerjaan yang tersedia.';
+                hint.classList.remove('text-danger');
+            }
         });
 
         $(document).ready(function () {
@@ -709,6 +1020,10 @@
             resizeCanvas(editCanvas, editSignaturePad);
             const canvas = document.getElementById('approvalCanvas');
             approvalPad = new SignaturePad(canvas);
+
+            $('#filter_bulan, #filter_tahun').on('change', function () {
+                $('#filterForm').trigger('submit');
+            });
 
             $('#tableLaporanHarian').DataTable({
                 processing: true,
@@ -870,7 +1185,7 @@
                     $('#edit_item_pekerjaan').html(pekerjaanOptions);
 
                     if (laporan.paraf) {
-                        $('#preview_paraf').html(`<img src="public/storage/${laporan.paraf}" width="60">`);
+                        $('#preview_paraf').html(`<img src="${storageBaseUrl}/${laporan.paraf}" class="img-paraf-preview" alt="Paraf">`);
                     } else {
                         $('#preview_paraf').html('');
                     }
@@ -880,12 +1195,12 @@
                     if (laporan.bukti_list && laporan.bukti_list.length) {
                         laporan.bukti_list.forEach(function (bukti, index) {
                             const ekstensi = bukti.split('.').pop().toLowerCase();
-                            const url = `public/storage/${bukti}`;
+                            const url = `${storageBaseUrl}/${bukti}`;
                             const previewId = `preview_existing_${index}`;
 
                             let previewHTML = '';
                             if (['jpg', 'jpeg', 'png'].includes(ekstensi)) {
-                                previewHTML = `<img src="${url}" alt="Preview" class="img-thumbnail mb-1" style="max-width: 150px;">`;
+                                previewHTML = `<img src="${url}" alt="Preview" class="img-thumbnail mb-1 bukti-thumb" style="max-width: 150px;">`;
                             } else if (ekstensi === 'pdf') {
                                 previewHTML = `<a href="${url}" target="_blank" class="badge bg-secondary d-inline-block mb-1">Lihat PDF</a>`;
                             }
@@ -1029,40 +1344,8 @@
                 preview.innerHTML = '';
 
                 if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        const img = new Image();
-                        img.onload = function () {
-                            const canvas = document.createElement('canvas');
-                            const ctx = canvas.getContext('2d');
-
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-
-                            ctx.drawImage(img, 0, 0);
-
-                            const now = new Date();
-                            const watermarkText = now.toLocaleString();
-
-                            ctx.font = 'bold 36px Arial';
-                            ctx.fillStyle = 'rgba(255, 0, 0, 0.7)';
-                            ctx.textAlign = 'right';
-                            ctx.fillText(watermarkText, canvas.width - 20, canvas.height - 20);
-
-                            const watermarkedImage = canvas.toDataURL('image/jpeg');
-                            preview.innerHTML = `<img src="${watermarkedImage}" alt="Preview" class="img-thumbnail" style="max-width: 150px;">`;
-
-                            canvas.toBlob(function (blob) {
-                                const newFile = new File([blob], file.name, { type: 'image/jpeg' });
-
-                                const dataTransfer = new DataTransfer();
-                                dataTransfer.items.add(newFile);
-                                input.files = dataTransfer.files;
-                            }, 'image/jpeg', 0.9);
-                        };
-                        img.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
+                    const objectUrl = URL.createObjectURL(file);
+                    preview.innerHTML = `<img src="${objectUrl}" alt="Preview" class="img-thumbnail bukti-thumb" style="max-width: 150px;">`;
                 } else if (file && file.type === 'application/pdf') {
                     preview.innerHTML = `<span class="badge bg-secondary">PDF dipilih</span>`;
                 }
@@ -1070,6 +1353,23 @@
 
             window.removeBuktiRow = function (button) {
                 const row = button.closest('tr');
+                const tbody = row.parentElement;
+
+                if (tbody.children.length <= 1) {
+                    const input = row.querySelector('input[type="file"]');
+                    const preview = row.querySelector('[id^="preview_"], .proof-preview');
+
+                    if (input) {
+                        input.value = '';
+                    }
+
+                    if (preview) {
+                        preview.innerHTML = '';
+                    }
+
+                    return;
+                }
+
                 row.remove();
             };
 
@@ -1094,7 +1394,7 @@
                 tbody.appendChild(row);
             };
 
-            $(document).on('click', '.img-thumbnail', function () {
+            $(document).on('click', '.img-thumbnail, .img-paraf-preview', function () {
                 const src = $(this).attr('src');
                 $('#modalPreviewImage').attr('src', src);
                 $('#imagePreviewModal').modal('show');
