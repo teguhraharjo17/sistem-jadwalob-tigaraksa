@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Log;
 
 class MileniaApiService
 {
-    protected string $baseUrl;
-    protected string $token;
+    protected ?string $baseUrl;
+    protected ?string $token;
 
     public function __construct()
     {
@@ -24,6 +24,11 @@ class MileniaApiService
      */
     public function getHolidays(): array
     {
+        if (!$this->baseUrl || !$this->token) {
+            Log::warning("Milenia API configuration is incomplete. URL or Token is missing.");
+            return [];
+        }
+
         return Cache::remember('milenia_holidays', now()->addDay(), function () {
             try {
                 $response = Http::withToken($this->token)
@@ -31,7 +36,11 @@ class MileniaApiService
                     ->get("{$this->baseUrl}/libur");
 
                 if ($response->successful()) {
-                    return $response->json();
+                    $json = $response->json();
+                    // Handle paginated response structure {"data": [...]}
+                    return isset($json['data']) && is_array($json['data']) 
+                        ? $json['data'] 
+                        : (is_array($json) ? $json : []);
                 }
 
                 Log::error("Milenia API error: " . $response->status() . " - " . $response->body());
