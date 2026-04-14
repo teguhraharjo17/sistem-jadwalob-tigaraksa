@@ -29,22 +29,36 @@ class MileniaApiService
             return [];
         }
 
-        return Cache::remember('milenia_holidays', now()->addDay(), function () {
+        return Cache::remember('milenia_holidays', now()->addDays(7), function () {
             try {
-                $response = Http::withToken($this->token)
-                    ->acceptJson()
-                    ->get("{$this->baseUrl}/libur");
+                $allData = [];
+                $currentPage = 1;
+                $lastPage = 1;
 
-                if ($response->successful()) {
+                do {
+                    $response = Http::withToken($this->token)
+                        ->acceptJson()
+                        ->get("{$this->baseUrl}/libur", ['page' => $currentPage]);
+
+                    if (!$response->successful()) {
+                        Log::error("Milenia API error on page {$currentPage}: " . $response->status());
+                        break;
+                    }
+
                     $json = $response->json();
-                    // Handle paginated response structure {"data": [...]}
-                    return isset($json['data']) && is_array($json['data']) 
-                        ? $json['data'] 
-                        : (is_array($json) ? $json : []);
-                }
+                    
+                    // Extract data array
+                    $pageData = isset($json['data']) && is_array($json['data']) ? $json['data'] : [];
+                    $allData = array_merge($allData, $pageData);
 
-                Log::error("Milenia API error: " . $response->status() . " - " . $response->body());
-                return [];
+                    // Handle pagination logic
+                    $lastPage = $json['last_page'] ?? 1;
+                    $currentPage++;
+
+                } while ($currentPage <= $lastPage);
+
+                return $allData;
+
             } catch (\Exception $e) {
                 Log::error("Milenia API Exception: " . $e->getMessage());
                 return [];

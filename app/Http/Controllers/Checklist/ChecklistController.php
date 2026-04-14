@@ -111,12 +111,11 @@ class ChecklistController extends Controller
         ]);
 
         $startDate = \Carbon\Carbon::parse($validated['start_date']);
-        if ($startDate->month != $validated['bulan'] || $startDate->year != $validated['tahun']) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tanggal mulai harus sesuai dengan bulan dan tahun yang dipilih.'
-            ], 422);
-        }
+        
+        // Auto-sync bulan and tahun from start_date to prevent 422 errors
+        // and provide a smoother user experience
+        $validated['bulan'] = (int)$startDate->month;
+        $validated['tahun'] = (int)$startDate->year;
 
         $checklist = Checklist::create([
             'area' => $validated['area'],
@@ -257,12 +256,10 @@ class ChecklistController extends Controller
         ]);
 
         $startDate = \Carbon\Carbon::parse($validated['start_date']);
-        if ($startDate->month != $validated['bulan'] || $startDate->year != $validated['tahun']) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Tanggal mulai harus sesuai dengan bulan dan tahun yang dipilih.'
-            ], 422);
-        }
+        
+        // Auto-sync bulan and tahun from start_date
+        $validated['bulan'] = (int)$startDate->month;
+        $validated['tahun'] = (int)$startDate->year;
 
         $checklist = Checklist::findOrFail($id);
 

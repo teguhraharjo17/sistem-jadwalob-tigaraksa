@@ -141,32 +141,69 @@
                     </tbody>
                 </table>
                 @if (!empty($holidayDetails))
-                    <div class="mt-3 p-3 bg-light border rounded">
-                        <h6 class="fw-bold text-danger">Catatan Hari Libur Bulan Ini:</h6>
-                        <ul class="mb-0">
-                            @foreach ($holidayDetails as $libur)
-                                <li>
-                                    <span class="fw-bold">{{ $libur['tanggal'] }}</span> 
-                                    - {{ $libur['jenis_libur'] }} ({{ $libur['keterangan'] }})
-                                </li>
-                            @endforeach
-                        </ul>
+                    <div class="mt-8 border-0 shadow-sm card bg-light-danger">
+                        <div class="p-5 card-body">
+                            <div class="mb-4 d-flex align-items-center">
+                                <i class="text-danger fas fa-calendar-day fs-3 me-3"></i>
+                                <h5 class="mb-0 fw-bold text-danger">Informasi Hari Libur & Cuti Bersama ({{ $now->translatedFormat('F Y') }})</h5>
+                            </div>
+                            <div class="row g-4">
+                                @foreach ($holidayDetails as $libur)
+                                    <div class="col-md-4">
+                                        <div class="p-4 bg-white border-0 shadow-sm rounded-3 h-100 border-start border-4 border-danger">
+                                            <div class="mb-1 d-flex justify-content-between align-items-center">
+                                                <span class="badge badge-light-danger fw-bold">{{ $libur['jenis_libur'] }}</span>
+                                                <small class="text-muted fw-bold"><i class="far fa-calendar me-1"></i> {{ $libur['tanggal'] }}</small>
+                                            </div>
+                                            <div class="mt-2 fw-bolder text-dark fs-6">{{ $libur['keterangan'] }}</div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
                     </div>
+                @else
+                   <div class="p-5 mt-5 text-center bg-light rounded-3 shadow-none">
+                        <i class="mb-3 fas fa-info-circle text-muted fs-1"></i>
+                        <p class="mb-0 text-muted">Tidak ada hari libur nasional atau cuti bersama yang tercatat untuk bulan ini.</p>
+                   </div>
                 @endif
             </div>
-            <div class="mt-3 p-3 bg-light border rounded w-100" style="max-width: 600px;">
-                <h6 class="fw-bold">Keterangan Warna:</h6>
-                <div class="d-flex align-items-center mb-2">
-                    <div class="me-2" style="width: 30px; height: 20px; background-color: #92D050; border: 1px solid #ccc;"></div>
-                    <span>Selesai & Paraf</span>
+
+            <!-- Enhanced Legend Section -->
+            <div class="p-6 mt-8 border-0 shadow-sm card bg-white">
+                <div class="mb-4 d-flex align-items-center">
+                    <i class="text-primary fas fa-info-circle fs-4 me-2"></i>
+                    <h6 class="mb-0 fw-bold">Panduan Warna & Status</h6>
                 </div>
-                <div class="d-flex align-items-center mb-2">
-                    <div class="me-2" style="width: 30px; height: 20px; background-color: #00B0F0; border: 1px solid #ccc;"></div>
-                    <span>Dijadwalkan, belum selesai</span>
-                </div>
-                <div class="d-flex align-items-center">
-                    <div class="me-2" style="width: 30px; height: 20px; background-color: #FFE5E5; border: 1px solid #ccc;"></div>
-                    <span>Hari Libur / Akhir Pekan</span>
+                <div class="row g-4">
+                    <div class="col-sm-4">
+                        <div class="p-3 border rounded d-flex align-items-center h-100">
+                            <div class="flex-shrink-0 shadow-sm rounded-circle me-3" style="width: 20px; height: 20px; background-color: #92D050; border: 2px solid #fff; outline: 1px solid #92D050;"></div>
+                            <div>
+                                <div class="fw-bold fs-7">Selesai & Paraf</div>
+                                <small class="text-muted">Pekerjaan telah dikerjakan dan diverifikasi.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3 border rounded d-flex align-items-center h-100">
+                            <div class="flex-shrink-0 shadow-sm rounded-circle me-3" style="width: 20px; height: 20px; background-color: #00B0F0; border: 2px solid #fff; outline: 1px solid #00B0F0;"></div>
+                            <div>
+                                <div class="fw-bold fs-7">Dijadwalkan</div>
+                                <small class="text-muted">Pekerjaan dijadwalkan namun belum diparaf.</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="p-3 border rounded d-flex align-items-center h-100">
+                            <div class="flex-shrink-0 shadow-sm rounded-circle me-3" style="width: 20px; height: 20px; background-color: #FFE5E5; border: 2px solid #fff; outline: 1px solid #FFDada;"></div>
+                            <div>
+                                <div class="fw-bold fs-7">Hari Libur / Weekend</div>
+                                <small class="text-muted">Hari libur nasional atau akhir pekan.</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -176,95 +213,113 @@
                 <div class="modal-content">
                     <form id="formTambahJadwalOB" method="POST" action="{{ route('checklist.store') }}">
                         @csrf
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="addJadwalOBLabel">Tambah Jadwal OB</h5>
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fs-2 fw-bolder text-dark" id="addJadwalOBLabel">Tambah Jadwal Pekerjaan</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
 
-                        <div class="modal-body">
-                            <div class="mb-3">
-                                <label for="area" class="form-label">Area</label>
-                                <select class="form-select select2-taggable" name="area" id="area" required>
-                                    <option value="" disabled selected>Pilih Area</option>
-                                    @foreach ($areas as $area)
-                                        <option value="{{ $area }}">{{ $area }}</option>
-                                    @endforeach
-                                </select>
-                                <small class="text-muted">Anda dapat mengetik area baru jika tidak tersedia.</small>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="pekerjaan" class="form-label">Pekerjaan</label>
-                                <input type="text" class="form-control" id="pekerjaan" name="pekerjaan" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="start_date" class="form-label">Dimulai Tanggal</label>
-                                <input type="date" class="form-control" id="start_date" name="start_date" required>
-                                <small class="text-muted">Checklist akan mulai dihitung sejak tanggal ini.</small>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="frequency_count" class="form-label">Periode Pekerjaan</label>
-                                <div class="row g-2">
-                                    <div class="col-md-4">
-                                        <input type="number" class="form-control" name="frequency_count" min="1" max="2" placeholder="Contoh: 1" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <select name="frequency_unit" class="form-select" required>
-                                            <option value="" disabled selected>Pilih Satuan</option>
-                                            <option value="per_hari">x per Hari</option>
-                                            <option value="per_x_hari">x per X Hari</option>
-                                            <option value="per_minggu">x per Minggu</option>
-                                            <option value="per_x_minggu">x per X Minggu</option>
-                                            <option value="per_bulan">x per Bulan</option>
+                        <div class="modal-body px-5 py-8">
+                            <!-- Section: Primary Info -->
+                            <div class="mb-8">
+                                <h6 class="fs-6 fw-bold text-gray-700 mb-4 border-bottom pb-2">Informasi Pekerjaan</h6>
+                                <div class="row g-5">
+                                    <div class="col-md-6">
+                                        <label for="area" class="form-label fw-bold small text-uppercase">Area</label>
+                                        <select class="form-select select2-taggable bg-light-gray" name="area" id="area" required>
+                                            <option value="" disabled selected>Pilih atau Ketik Area</option>
+                                            @foreach ($areas as $area)
+                                                <option value="{{ $area }}">{{ $area }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-md-4">
-                                        <input type="number" class="form-control" name="frequency_interval" min="1" placeholder="Isi jika X Hari/Minggu (cth: 2)">
+                                    <div class="col-md-6">
+                                        <label for="pekerjaan" class="form-label fw-bold small text-uppercase">Tugas / Pekerjaan</label>
+                                        <input type="text" class="form-control" id="pekerjaan" name="pekerjaan" placeholder="Contoh: Pembersihan Kaca" required>
                                     </div>
                                 </div>
-                                <small class="text-muted d-block mt-1">Contoh: 2x per hari = Isi <b>2</b> dan pilih <b>per Hari</b>.</small>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="default_shift" class="form-label">Default Shift (Jika hanya 1x per Hari)</label>
-                                <select name="default_shift" class="form-select">
-                                    <option value="Pagi">Pagi</option>
-                                    <option value="Siang">Siang</option>
-                                </select>
-                                <small class="text-muted">Digunakan saat frekuensi = 1x per hari untuk menentukan shift mana yang dijadwalkan.</small>
-                            </div>
+                            <!-- Section: Scheduling -->
+                            <div class="mb-8">
+                                <h6 class="fs-6 fw-bold text-gray-700 mb-4 border-bottom pb-2">Penjadwalan & Frekuensi</h6>
+                                <div class="row g-5">
+                                    <div class="col-md-12">
+                                        <label for="start_date" class="form-label fw-bold small text-uppercase">Dimulai Tanggal</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-calendar-alt"></i></span>
+                                            <input type="date" class="form-control border-start-0" id="start_date" name="start_date" required>
+                                        </div>
+                                        <small class="text-primary mt-1 d-block"><i class="fas fa-magic me-1"></i> Bulan & Tahun akan otomatis menyesuaikan tanggal pilihan Anda.</small>
+                                    </div>
+                                    
+                                    <!-- Hidden / Background fields for Month/Year that sync automatically -->
+                                    <div class="col-md-6 d-none">
+                                        <select name="bulan" id="bulan" required>
+                                            @for ($i = 1; $i <= 12; $i++)
+                                                <option value="{{ $i }}">{{ $i }}</option>
+                                            @endfor
+                                        </select>
+                                        <select name="tahun" id="tahun" required>
+                                            @for ($y = now()->year - 2; $y <= now()->year + 2; $y++)
+                                                <option value="{{ $y }}">{{ $y }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
 
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="bulan" class="form-label">Bulan</label>
-                                    <select class="form-select" name="bulan" id="bulan" required>
-                                        @for ($i = 1; $i <= 12; $i++)
-                                            <option value="{{ $i }}">{{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}</option>
-                                        @endfor
-                                    </select>
+                                    <div class="col-md-8">
+                                        <label class="form-label fw-bold small text-uppercase">Berapa Kali Dikerjakan?</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="frequency_count" min="1" max="5" value="1" required style="max-width: 80px;">
+                                            <span class="input-group-text bg-light text-dark fw-bold">Kali</span>
+                                            <select name="frequency_unit" class="form-select border-start-0" required>
+                                                <option value="per_hari">Per Hari</option>
+                                                <option value="per_x_hari">Per X Hari</option>
+                                                <option value="per_minggu">Per Minggu</option>
+                                                <option value="per_x_minggu">Per X Minggu</option>
+                                                <option value="per_bulan">Per Bulan</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold small text-uppercase">Interval (X)</label>
+                                        <input type="number" class="form-control" name="frequency_interval" min="1" placeholder="Cth: 2">
+                                    </div>
                                 </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label for="tahun" class="form-label">Tahun</label>
-                                    <select class="form-select" name="tahun" id="tahun" required>
-                                        @for ($y = now()->year - 5; $y <= now()->year + 1; $y++)
-                                            <option value="{{ $y }}" {{ $y == now()->year ? 'selected' : '' }}>{{ $y }}</option>
-                                        @endfor
-                                    </select>
-                                </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="keterangan" class="form-label">Keterangan</label>
-                                <textarea class="form-control" id="keterangan" name="keterangan" rows="3"></textarea>
+                            <!-- Section: Options -->
+                            <div class="mb-0">
+                                <h6 class="fs-6 fw-bold text-gray-700 mb-4 border-bottom pb-2">Detail Tambahan</h6>
+                                <div class="row g-5">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-uppercase">Default Shift (Jika 1x)</label>
+                                        <div class="d-flex gap-4 mt-2">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="radio" value="Pagi" name="default_shift" checked id="shiftPagi"/>
+                                                <label class="form-check-label" for="shiftPagi">Pagi</label>
+                                            </div>
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="radio" value="Siang" name="default_shift" id="shiftSiang"/>
+                                                <label class="form-check-label" for="shiftSiang">Siang</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label for="keterangan" class="form-label fw-bold small text-uppercase">Keterangan / Catatan</label>
+                                        <textarea class="form-control" id="keterangan" name="keterangan" rows="2" placeholder="Catatan khusus jika ada..."></textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary">Simpan</button>
+                        <div class="modal-footer bg-light border-0">
+                            <button type="button" class="btn btn-light-danger fw-bold" data-bs-dismiss="modal">Tutup</button>
+                            <button type="submit" class="btn btn-primary fw-bold" id="btnSubmitTambah">
+                                <span class="indicator-label">Simpan Jadwal</span>
+                                <span class="indicator-progress d-none">
+                                    Mohon tunggu... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                                </span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -277,91 +332,105 @@
                     <form id="formEditJadwalOB" method="POST">
                         @csrf
                         @method('PUT')
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="editJadwalOBLabel">Edit Jadwal OB</h5>
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title fs-2 fw-bolder text-dark" id="editJadwalOBLabel">Edit Jadwal Pekerjaan</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
                         </div>
-                        <div class="modal-body">
-                            {{-- Form isian sama seperti form tambah --}}
-                            <div class="mb-3">
-                                <label for="edit_area" class="form-label">Area</label>
-                                <select class="form-select select2-taggable" name="area" id="edit_area" required>
-                                    <option value="" disabled selected>Pilih Area</option>
-                                    @foreach ($areas as $area)
-                                        <option value="{{ $area }}">{{ $area }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="edit_pekerjaan" class="form-label">Pekerjaan</label>
-                                <input type="text" class="form-control" id="edit_pekerjaan" name="pekerjaan" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="edit_start_date" class="form-label">Dimulai Tanggal</label>
-                                <input type="date" class="form-control" id="edit_start_date" name="start_date" required>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Periode Pekerjaan</label>
-                                <div class="row g-2">
-                                    <div class="col-md-4">
-                                        <input type="number" class="form-control" name="frequency_count" id="edit_frequency_count" min="1" max="2" required>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <select name="frequency_unit" class="form-select" id="edit_frequency_unit" required>
-                                            <option value="" disabled>Pilih Satuan</option>
-                                            <option value="per_hari">x per Hari</option>
-                                            <option value="per_x_hari">x per X Hari</option>
-                                            <option value="per_minggu">x per Minggu</option>
-                                            <option value="per_x_minggu">x per X Minggu</option>
-                                            <option value="per_bulan">x per Bulan</option>
+                        <div class="modal-body px-5 py-8">
+                             <!-- Section: Primary Info -->
+                             <div class="mb-8">
+                                <h6 class="fs-6 fw-bold text-gray-700 mb-4 border-bottom pb-2">Informasi Pekerjaan</h6>
+                                <div class="row g-5">
+                                    <div class="col-md-6">
+                                        <label for="edit_area" class="form-label fw-bold small text-uppercase">Area</label>
+                                        <select class="form-select select2-taggable bg-light-gray" name="area" id="edit_area" required>
+                                            <option value="" disabled>Pilih Area</option>
+                                            @foreach ($areas as $area)
+                                                <option value="{{ $area }}">{{ $area }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
+                                    <div class="col-md-6">
+                                        <label for="edit_pekerjaan" class="form-label fw-bold small text-uppercase">Tugas / Pekerjaan</label>
+                                        <input type="text" class="form-control" id="edit_pekerjaan" name="pekerjaan" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section: Scheduling -->
+                            <div class="mb-8">
+                                <h6 class="fs-6 fw-bold text-gray-700 mb-4 border-bottom pb-2">Penjadwalan & Frekuensi</h6>
+                                <div class="row g-5">
+                                    <div class="col-md-12">
+                                        <label for="edit_start_date" class="form-label fw-bold small text-uppercase">Dimulai Tanggal</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-calendar-alt"></i></span>
+                                            <input type="date" class="form-control border-start-0" id="edit_start_date" name="start_date" required>
+                                        </div>
+                                    </div>
+
+                                    <!-- Hidden fields for Month/Year that sync automatically -->
+                                    <div class="col-md-6 d-none">
+                                        <select name="bulan" id="edit_bulan" required>
+                                            @for ($i = 1; $i <= 12; $i++)
+                                                <option value="{{ $i }}">{{ $i }}</option>
+                                            @endfor
+                                        </select>
+                                        <select name="tahun" id="edit_tahun" required>
+                                            @for ($y = now()->year - 5; $y <= now()->year + 2; $y++)
+                                                <option value="{{ $y }}">{{ $y }}</option>
+                                            @endfor
+                                        </select>
+                                    </div>
+
+                                    <div class="col-md-8">
+                                        <label class="form-label fw-bold small text-uppercase">Frekuensi</label>
+                                        <div class="input-group">
+                                            <input type="number" class="form-control" name="frequency_count" id="edit_frequency_count" min="1" max="5" required style="max-width: 80px;">
+                                            <span class="input-group-text bg-light text-dark fw-bold">Kali</span>
+                                            <select name="frequency_unit" class="form-select border-start-0" id="edit_frequency_unit" required>
+                                                <option value="per_hari">Per Hari</option>
+                                                <option value="per_x_hari">Per X Hari</option>
+                                                <option value="per_minggu">Per Minggu</option>
+                                                <option value="per_x_minggu">Per X Minggu</option>
+                                                <option value="per_bulan">Per Bulan</option>
+                                            </select>
+                                        </div>
+                                    </div>
                                     <div class="col-md-4">
+                                        <label class="form-label fw-bold small text-uppercase">Interval (X)</label>
                                         <input type="number" class="form-control" name="frequency_interval" id="edit_frequency_interval">
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="edit_default_shift" class="form-label">Default Shift</label>
-                                <select name="default_shift" class="form-select" id="edit_default_shift">
-                                    <option value="Pagi">Pagi</option>
-                                    <option value="Siang">Siang</option>
-                                </select>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="edit_bulan" class="form-label">Bulan</label>
-                                    <select class="form-select" name="bulan" id="edit_bulan" required>
-                                        @for ($i = 1; $i <= 12; $i++)
-                                            <option value="{{ $i }}">{{ \Carbon\Carbon::create()->month($i)->translatedFormat('F') }}</option>
-                                        @endfor
-                                    </select>
+                            <!-- Section: Options -->
+                            <div class="mb-0">
+                                <h6 class="fs-6 fw-bold text-gray-700 mb-4 border-bottom pb-2">Detail Tambahan</h6>
+                                <div class="row g-5">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold small text-uppercase">Default Shift</label>
+                                        <select name="default_shift" class="form-select bg-light" id="edit_default_shift">
+                                            <option value="Pagi">Pagi</option>
+                                            <option value="Siang">Siang</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label for="edit_keterangan" class="form-label fw-bold small text-uppercase">Keterangan / Catatan</label>
+                                        <textarea class="form-control" id="edit_keterangan" name="keterangan" rows="2"></textarea>
+                                    </div>
                                 </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label for="edit_tahun" class="form-label">Tahun</label>
-                                    <select class="form-select" name="tahun" id="edit_tahun" required>
-                                        @for ($y = now()->year - 5; $y <= now()->year + 1; $y++)
-                                            <option value="{{ $y }}" {{ $y == now()->year ? 'selected' : '' }}>{{ $y }}</option>
-                                        @endfor
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <label for="edit_keterangan" class="form-label">Keterangan</label>
-                                <textarea class="form-control" id="edit_keterangan" name="keterangan" rows="3"></textarea>
                             </div>
                         </div>
 
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary">Update</button>
+                        <div class="modal-footer bg-light border-0">
+                            <button type="button" class="btn btn-light-danger fw-bold" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary fw-bold">
+                                <span class="indicator-label">Update Jadwal</span>
+                                <span class="indicator-progress d-none">
+                                    Menyimpan... <span class="spinner-border spinner-border-sm align-middle ms-2"></span>
+                                </span>
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -379,9 +448,21 @@
         }
 
         .hari-libur {
-            background-color: #ffe5e5 !important;
-            color: #d10000 !important;
+            background-color: #ffeaea !important;
+            color: #e62e2e !important;
             font-weight: bold;
+            position: relative;
+        }
+
+        .hari-libur::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(230, 46, 46, 0.05);
+            pointer-events: none;
         }
 
         #tablechecklist tbody tr:hover {
@@ -740,23 +821,72 @@
                 dropdownParent: $('#editJadwalOB')
             });
 
+            // Loading State Helper
+            const setBtnLoading = (form, isLoading) => {
+                const btn = form.find('button[type="submit"]');
+                const label = btn.find('.indicator-label');
+                const progress = btn.find('.indicator-progress');
+
+                if (isLoading) {
+                    btn.attr('disabled', true);
+                    label.addClass('d-none');
+                    progress.removeClass('d-none');
+                } else {
+                    btn.removeAttr('disabled');
+                    label.removeClass('d-none');
+                    progress.addClass('d-none');
+                }
+            };
+
+            // Smart Sync Logic for Add Modal
+            $('#start_date').on('change', function() {
+                const dateVal = $(this).val();
+                if (dateVal) {
+                    const date = new Date(dateVal);
+                    $('#bulan').val(date.getMonth() + 1);
+                    $('#tahun').val(date.getFullYear());
+                }
+            });
+
+            // Smart Sync Logic for Edit Modal
+            $('#edit_start_date').on('change', function() {
+                const dateVal = $(this).val();
+                if (dateVal) {
+                    const date = new Date(dateVal);
+                    $('#edit_bulan').val(date.getMonth() + 1);
+                    $('#edit_tahun').val(date.getFullYear());
+                }
+            });
+
+            // Fix aria-hidden focus conflict
+            $('.modal').on('show.bs.modal', function() {
+                $('#kt_app_root').attr('aria-hidden', 'true');
+            }).on('hide.bs.modal', function() {
+                $('#kt_app_root').removeAttr('aria-hidden');
+            });
+
             $('#formTambahJadwalOB').on('submit', function(e) {
                 e.preventDefault();
+                const form = $(this);
+                setBtnLoading(form, true);
 
-                const formData = $(this).serialize();
-
-                $.post("{{ route('checklist.store') }}", formData)
+                $.post("{{ route('checklist.store') }}", form.serialize())
                     .done(function(response) {
-                        Swal.fire('Sukses!', response.message, 'success');
-                        $('#addJadwalOB').modal('hide');
-                        setTimeout(() => window.location.reload(), 1000);
+                        setBtnLoading(form, false);
+                        Swal.fire('Sukses!', 'Jadwal pembersihan berhasil ditambahkan!', 'success').then(() => {
+                            $('#addJadwalOB').modal('hide');
+                            window.location.reload();
+                        });
                     })
                     .fail(function(xhr) {
+                        setBtnLoading(form, false);
                         let errors = xhr.responseJSON?.errors;
                         let message = 'Terjadi kesalahan.';
 
                         if (errors) {
                             message = Object.values(errors).join('<br>');
+                        } else if (xhr.responseJSON?.message) {
+                            message = xhr.responseJSON.message;
                         }
 
                         Swal.fire('Gagal!', message, 'error');
@@ -807,17 +937,21 @@
                 const form = $(this);
                 const actionUrl = form.attr('action');
                 const formData = form.serialize();
+                setBtnLoading(form, true);
 
                 $.ajax({
                     url: actionUrl,
                     type: 'POST',
                     data: formData,
                     success: function(response) {
-                        Swal.fire('Berhasil!', response.message, 'success');
-                        $('#editJadwalOB').modal('hide');
-                        setTimeout(() => window.location.reload(), 1000);
+                        setBtnLoading(form, false);
+                        Swal.fire('Berhasil!', response.message, 'success').then(() => {
+                            $('#editJadwalOB').modal('hide');
+                            window.location.reload();
+                        });
                     },
                     error: function(xhr) {
+                        setBtnLoading(form, false);
                         let errors = xhr.responseJSON?.errors;
                         let message = 'Terjadi kesalahan.';
 
