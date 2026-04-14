@@ -2,6 +2,21 @@ document.addEventListener('DOMContentLoaded', function () {
     const yearSelector = document.getElementById('filterYear');
     let charts = [];
 
+    function revealCards() {
+        document.querySelectorAll('.dashboard-chart-card').forEach(card => {
+            card.classList.remove('is-ready');
+            void card.offsetWidth;
+            card.classList.add('is-ready');
+        });
+    }
+
+    function makeVerticalGradient(ctx, colorTop, colorBottom) {
+        const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+        gradient.addColorStop(0, colorTop);
+        gradient.addColorStop(1, colorBottom);
+        return gradient;
+    }
+
     async function loadDashboardData(year) {
         const endpoint = yearSelector.dataset.route.replace(':year', year);
         const res = await fetch(endpoint);
@@ -11,18 +26,42 @@ document.addEventListener('DOMContentLoaded', function () {
         charts.forEach(chart => chart.destroy());
         charts = [];
 
+        revealCards();
+
+        const checklistCtx = document.getElementById('checklist_progress_chart').getContext('2d');
+        const laporanCtx = document.getElementById('laporan_perbulan_chart').getContext('2d');
+        const shiftCtx = document.getElementById('shift_comparison_chart').getContext('2d');
+
         const baseOptions = {
             responsive: true,
             maintainAspectRatio: false,
+            animation: {
+                duration: 1100,
+                easing: 'easeOutCubic'
+            },
             plugins: {
                 legend: {
                     display: true,
-                    labels: { font: { size: 12 } }
+                    labels: {
+                        font: { size: 12, weight: '600' },
+                        color: '#334155',
+                        boxWidth: 14,
+                        usePointStyle: true,
+                        pointStyle: 'circle'
+                    }
                 },
                 tooltip: { enabled: true }
             },
             scales: {
-                y: { beginAtZero: true, ticks: { precision: 0 } }
+                x: {
+                    ticks: { color: '#64748b' },
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0, color: '#64748b' },
+                    grid: { color: 'rgba(148, 163, 184, 0.18)' }
+                }
             }
         };
 
@@ -32,8 +71,20 @@ document.addEventListener('DOMContentLoaded', function () {
             data: {
                 labels: data.checklist_progress.map(i => i.tanggal),
                 datasets: [
-                    { label: 'Di Approve (Selesai)', data: data.checklist_progress.map(i => i.selesai), backgroundColor: '#0066ffff' },
-                    { label: 'Total Pekerjaan', data: data.checklist_progress.map(i => i.total), backgroundColor: '#56c75fff' }
+                    {
+                        label: 'Di Approve (Selesai)',
+                        data: data.checklist_progress.map(i => i.selesai),
+                        backgroundColor: makeVerticalGradient(checklistCtx, 'rgba(14, 165, 233, 0.95)', 'rgba(2, 132, 199, 0.72)'),
+                        borderRadius: 10,
+                        maxBarThickness: 26
+                    },
+                    {
+                        label: 'Total Pekerjaan',
+                        data: data.checklist_progress.map(i => i.total),
+                        backgroundColor: makeVerticalGradient(checklistCtx, 'rgba(34, 197, 94, 0.92)', 'rgba(21, 128, 61, 0.68)'),
+                        borderRadius: 10,
+                        maxBarThickness: 26
+                    }
                 ]
             },
             options: {
@@ -49,7 +100,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 labels: data.area_distribution.map(i => i.area),
                 datasets: [{
                     data: data.area_distribution.map(i => i.jumlah),
-                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#6366f1']
+                    backgroundColor: ['#0ea5e9', '#10b981', '#f59e0b', '#f97316', '#8b5cf6', '#ef4444'],
+                    borderColor: '#ffffff',
+                    borderWidth: 3,
+                    hoverOffset: 14
                 }]
             },
             options: {
@@ -78,11 +132,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 datasets: [{
                     label: 'Jumlah Laporan',
                     data: laporanDataLengkap,
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: '#0ea5e9',
+                    backgroundColor: makeVerticalGradient(laporanCtx, 'rgba(14, 165, 233, 0.28)', 'rgba(14, 165, 233, 0.03)'),
                     fill: true,
                     tension: 0.4,
-                    pointRadius: 3
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#0ea5e9',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2
                 }]
             },
             options: baseOptions
@@ -98,8 +156,20 @@ document.addEventListener('DOMContentLoaded', function () {
             data: {
                 labels: dates,
                 datasets: [
-                    { label: 'Shift Pagi', data: pagiData, backgroundColor: '#06b6d4' },
-                    { label: 'Shift Siang', data: siangData, backgroundColor: '#f97316' }
+                    {
+                        label: 'Shift Pagi',
+                        data: pagiData,
+                        backgroundColor: makeVerticalGradient(shiftCtx, 'rgba(6, 182, 212, 0.94)', 'rgba(8, 145, 178, 0.74)'),
+                        borderRadius: 10,
+                        maxBarThickness: 28
+                    },
+                    {
+                        label: 'Shift Siang',
+                        data: siangData,
+                        backgroundColor: makeVerticalGradient(shiftCtx, 'rgba(249, 115, 22, 0.92)', 'rgba(194, 65, 12, 0.74)'),
+                        borderRadius: 10,
+                        maxBarThickness: 28
+                    }
                 ]
             },
             options: {
@@ -130,15 +200,25 @@ document.addEventListener('DOMContentLoaded', function () {
                 datasets: [{
                     label: 'Jumlah',
                     data: pekerjaanJumlah,
-                    backgroundColor: pekerjaanLabels.map((_, i) => colors[i % colors.length])
+                    backgroundColor: pekerjaanLabels.map((_, i) => colors[i % colors.length] + 'CC'),
+                    borderColor: '#ffffff',
+                    borderWidth: 2
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                animation: {
+                    duration: 1300,
+                    easing: 'easeOutQuart'
+                },
                 plugins: {
                     legend: {
-                        position: 'right'
+                        position: 'right',
+                        labels: {
+                            color: '#334155',
+                            font: { size: 12, weight: '600' }
+                        }
                     },
                     tooltip: {
                         callbacks: {
