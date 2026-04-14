@@ -11,9 +11,17 @@ use \Illuminate\Http\Request;
 use App\Exports\ChecklistExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Http;
+use App\Services\MileniaApiService;
 
 class ChecklistController extends Controller
 {
+    protected $mileniaApi;
+
+    public function __construct(MileniaApiService $mileniaApi)
+    {
+        $this->mileniaApi = $mileniaApi;
+    }
+
     public function index(Request $request)
     {
         $bulan = $request->get('bulan', now()->month);
@@ -50,30 +58,30 @@ class ChecklistController extends Controller
                 return [$key => 1];
             })->toArray();
 
-        $holidayResponse = Http::get('http://192.168.0.8:8000/api/libur');
+        $holidayData = collect($this->mileniaApi->getHolidays());
 
         $holidayDates = [];
         $holidayDetails = [];
 
-        if ($holidayResponse->successful()) {
-            $holidayData = collect($holidayResponse->json());
-
+        if ($holidayData->isNotEmpty()) {
             $holidayDates = $holidayData
                 ->pluck('tanggal')
                 ->map(fn($t) => \Carbon\Carbon::parse($t)->format('Y-m-d'))
                 ->toArray();
 
             $holidayDetails = $holidayData->filter(function ($item) use ($bulan, $tahun) {
+                if (!is_array($item) || !isset($item['tanggal'])) {
+                    return false;
+                }
                 $date = \Carbon\Carbon::parse($item['tanggal']);
                 return $date->month == $bulan && $date->year == $tahun;
             })->sortBy('tanggal')->map(function ($item) {
                 return [
                     'tanggal' => \Carbon\Carbon::parse($item['tanggal'])->translatedFormat('d F Y'),
-                    'keterangan' => $item['keterangan'],
-                    'jenis_libur' => $item['jenis_libur'],
+                    'keterangan' => $item['keterangan'] ?? '-',
+                    'jenis_libur' => $item['jenis_libur'] ?? '-',
                 ];
             })->values()->toArray();
-
         }
 
         return view('pages.checklist.index', compact(
@@ -139,8 +147,7 @@ class ChecklistController extends Controller
         $end   = Carbon::create($checklist->tahun, $checklist->bulan)->endOfMonth();
 
         if (empty($holidayDates)) {
-            $holidayResponse = Http::get('http://192.168.0.8:8000/api/libur');
-            $holidayDates = collect($holidayResponse->json())
+            $holidayDates = collect($this->mileniaApi->getHolidays())
                 ->pluck('tanggal')
                 ->map(fn($t) => Carbon::parse($t)->format('Y-m-d'))
                 ->toArray();

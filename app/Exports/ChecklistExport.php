@@ -159,13 +159,11 @@ class ChecklistExport implements FromArray, WithHeadings, WithStyles, WithEvents
                 }
 
                 // Hari libur
-                $holidays = Http::get('http://192.168.0.8:8000/api/libur')
-                    ->successful()
-                    ? collect(Http::get('http://192.168.0.8:8000/api/libur')->json())
-                        ->pluck('tanggal')
-                        ->map(fn($t) => Carbon::parse($t)->format('Y-m-d'))
-                        ->toArray()
-                    : [];
+                $holidays = collect(app(\App\Services\MileniaApiService::class)->getHolidays())
+                    ->filter(fn($item) => is_array($item) && isset($item['tanggal']))
+                    ->pluck('tanggal')
+                    ->map(fn($t) => Carbon::parse($t)->format('Y-m-d'))
+                    ->toArray();
 
                 $currentRow = 3;
 

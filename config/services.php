@@ -31,4 +31,9 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'milenia' => [
+        'url' => env('MILENIA_API_URL', 'http://192.168.0.8:8000/api'),
+        'token' => env('MILENIA_API_TOKEN'),
+    ],
+
 ];
