@@ -814,7 +814,18 @@
                 dropdownParent: $('#addJadwalOB')
             });
 
-            $('#edit_area').select2({
+            // API Diagnostic Logs for Troubleshooting
+            const apiStatus = @json($apiDiagnostics ?? []);
+            console.group('%c 🔍 Milenia API Diagnostic Details', 'background: #222; color: #bada55; padding: 5px; font-weight: bold;');
+            console.log('%c API Target URL: ', 'font-weight: bold;', apiStatus.url);
+            console.log('%c Cache Status: ', 'font-weight: bold;', apiStatus.cached ? '✅ CACHED' : '❌ LIVE FETCH');
+            console.log('%c Records Found: ', 'font-weight: bold;', apiStatus.count);
+            console.log('%c Server Time: ', 'font-weight: bold;', apiStatus.server_time);
+            
+            if (apiStatus.count === 0) {
+                console.warn('%c ⚠️ No holiday records found! Check if the API URL is reachable from the server.', 'color: orange; font-weight: bold;');
+            }
+            console.groupEnd();
                 tags: true,
                 placeholder: "Pilih atau ketik area",
                 width: '100%',

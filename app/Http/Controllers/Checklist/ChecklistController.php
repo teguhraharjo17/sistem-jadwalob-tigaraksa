@@ -58,7 +58,17 @@ class ChecklistController extends Controller
                 return [$key => 1];
             })->toArray();
 
-        $holidayData = collect($this->mileniaApi->getHolidays());
+        $holidayData = $this->mileniaApi->getHolidays();
+        $isCached = Cache::has('milenia_holidays');
+        
+        $apiDiagnostics = [
+            'url' => config('services.milenia.base_url'),
+            'cached' => $isCached,
+            'count' => count($holidayData),
+            'server_time' => now()->toDateTimeString(),
+        ];
+
+        $holidayData = collect($holidayData);
 
         $holidayDates = [];
         $holidayDetails = [];
@@ -91,7 +101,8 @@ class ChecklistController extends Controller
             'statusData',
             'parafStatuses',
             'holidayDates',
-            'holidayDetails'
+            'holidayDetails',
+            'apiDiagnostics'
         ));
     }
 
