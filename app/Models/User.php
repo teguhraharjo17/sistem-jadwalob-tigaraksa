@@ -14,7 +14,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'username',
-        'role',
+        'role_id',
         'password',
     ];
 
@@ -23,15 +23,27 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    /**
+     * Relationship: User belongs to a Role
+     */
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
 
     /**
      * Cek apakah user memiliki role tertentu
      */
     public function hasRole($role)
     {
-        return $this->role === $role;
+        return $this->role && $this->role->name === $role;
+    }
+
+    /**
+     * Cek apakah user memiliki hak akses menu tertentu
+     */
+    public function hasPermission($permission)
+    {
+        return $this->role && is_array($this->role->permissions) && in_array($permission, $this->role->permissions);
     }
 }

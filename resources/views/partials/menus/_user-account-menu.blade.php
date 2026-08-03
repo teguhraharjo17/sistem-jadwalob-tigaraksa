@@ -15,8 +15,8 @@
 						{{ Auth::user()->name }}
 					</div>
 
-					<span class="badge badge-light-{{ Auth::user()->role === 'Admin' ? 'danger' : 'primary' }} fw-semibold py-1 px-2 ms-2">
-						{{ Auth::user()->role }}
+					<span class="badge badge-light-{{ Auth::user()->hasRole('Super Admin') ? 'danger' : (Auth::user()->hasRole('Admin') ? 'warning' : 'primary') }} fw-semibold py-1 px-2 ms-2">
+						{{ Auth::user()->role ? Auth::user()->role->name : 'No Role' }}
 					</span>
 				</div>
 			</div>
@@ -29,13 +29,13 @@
 	<!--end::Menu separator-->
 	<!--begin::Menu item-->
 	@auth
-		@if(Auth::user()->role === 'Admin')
+		@can('isAdmin')
 			<div class="menu-item px-5">
 				<a href="{{ route('admin.make-account') }}" class="menu-link px-5">
 					Make an Account
 				</a>
 			</div>
-		@endif
+		@endcan
 	@endauth
 	<div class="menu-item px-5">
 		<a href="{{ route('logout') }}" class="menu-link px-5"

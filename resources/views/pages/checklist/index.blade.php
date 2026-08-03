@@ -24,7 +24,7 @@
             </select>
         </div>
 
-        <div class="p-4 rounded shadow-sm bg-white">
+        <div class="p-4 rounded shadow-sm bg-white" id="checklistTableContainer">
             <div class="table-responsive">
                 @php
                     $bulan = request('bulan', now()->month);
@@ -129,10 +129,14 @@
 
                                     <td class="text-start keterangan-column">{{ $item->keterangan }}</td>
                                     <td class="text-center">
-                                        <button type="button" class="btn btn-xs btn-light border edit-checklist-btn"
-                                                data-id="{{ $item->id }}">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
+                                        @if(auth()->user()->hasPermission('checklist_edit'))
+                                            <button type="button" class="btn btn-xs btn-light border edit-checklist-btn"
+                                                    data-id="{{ $item->id }}">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                        @else
+                                            <span class="text-muted fs-9">-</span>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
@@ -438,6 +442,50 @@
         </div>
     </div>
 <style>
+        /* Dynamic Datatable FixedColumns Freeze Panel styling */
+        .DTFC_LeftWrapper table,
+        .dtfc-fixed-left,
+        th.dtfc-fixed-left,
+        td.dtfc-fixed-left {
+            background-color: #ffffff !important;
+            opacity: 1 !important;
+            z-index: 10 !important;
+        }
+
+        /* Ensure header of fixed columns is solid light gray */
+        thead tr th.dtfc-fixed-left {
+            background-color: #f1f5f9 !important;
+            font-weight: 700 !important;
+            border-bottom: 2px solid #cbd5e1 !important;
+        }
+
+        /* Make grid lines/borders inside the table thicker and clearer */
+        #tablechecklist,
+        #tablechecklist th,
+        #tablechecklist td {
+            border: 2px solid #94a3b8 !important; /* Thicker grid lines */
+        }
+
+        /* Add a very distinct thick border to separate frozen columns from scrollable columns */
+        th.dtfc-fixed-left:nth-child(3),
+        td.dtfc-fixed-left:nth-child(3) {
+            border-right: 4px double #475569 !important; /* Thick dividing border */
+        }
+
+        /* Ensure alternate row coloring works on frozen columns as well */
+        #tablechecklist tbody tr:nth-child(odd) td.dtfc-fixed-left {
+            background-color: #f8fafc !important;
+        }
+
+        #tablechecklist tbody tr:nth-child(even) td.dtfc-fixed-left {
+            background-color: #ffffff !important;
+        }
+
+        /* Fix hover state for frozen columns */
+        #tablechecklist tbody tr:hover td.dtfc-fixed-left {
+            background-color: #e2e8f0 !important;
+        }
+
         .highlight-title {
             background-color: #f8f9fa;
             padding: 10px 20px;
@@ -671,13 +719,17 @@
             font-size: 1rem;
         }
 
-        table.dataTable tbody tr.dtrg-group {
+        table.dataTable tbody tr.dtrg-group td {
+            position: sticky;
+            left: 0;
+            z-index: 9 !important;
             text-align: left !important;
-            padding-left: 12px;
+            padding-left: 12px !important;
             font-weight: bold;
-            background-color: #f8f9fa !important;
-            color: #000;
+            background-color: #e2e8f0 !important; /* Nice distinct solid light background */
+            color: #0f172a !important;
             text-transform: uppercase;
+            border-bottom: 2px solid #94a3b8 !important;
         }
 
         .pekerjaan-column {
@@ -728,84 +780,100 @@
     <script src="https://cdn.datatables.net/fixedcolumns/5.0.5/js/dataTables.fixedColumns.js"></script>
     <script>
         $(document).ready(function () {
-            $('#tablechecklist').DataTable({
-                scrollX: true,
-                scrollCollapse: true,
-                paging: true,
-                searching: true,
-                scrollY: 300,
-                ordering: false,
-                rowGroup: {
-                    dataSrc: 0
-                },
-                fixedColumns: {
-                    left: 3
-                },
-                fixedHeader: {
-                    header: true
-                },
-                rowCallback: function(row, data, index) {
-                    if ($(row).hasClass('area-header-row')) {
-                        $(row).removeClass('odd even');
-                    }
-                },
-                columnDefs: [
-                    { targets: 0, visible: false, className: 'text-start' },
-                    { targets: 1, width: "50px", className: "text-center nomor-column" },
-                    { targets: 2, width: "300px", className: "text-start pekerjaan-column" },
-                    { targets: 3, width: "150px", className: "periodic-column" },
-                    { targets: -1, width: "250px", className: "text-start keterangan-column" },
-                ],
-                dom: '<"row mb-3 align-items-center"' +
-                    '<"col-md-6 d-flex align-items-center gap-2"B>' +
-                    '<"col-md-6 text-end"f>>' +
-                    '<"row"<"col-sm-12"t>>' +
-                    '<"row mt-3"' +
-                    '<"col-sm-6"l><"col-sm-6 text-end"p>>',
-                buttons: [
-                    @if(auth()->user()->hasRole('Admin'))
-                    {
-                        text: '<i class="fas fa-plus"></i> Tambah Jadwal',
-                        className: 'btn custom-button btn-sm me-1',
-                        action: function () {
-                            $('#addJadwalOB').modal('show');
-                        }
-                    },
-                    @endif
-                    {
-                        extend: 'colvis',
-                        text: '<i class="fas fa-columns"></i> Column Visible',
-                        className: 'btn custom-button btn-sm me-1',
-                    },
-                    @if(auth()->user()->hasRole('Admin'))
-                    {
-                        text: '<i class="fas fa-file-excel"></i> Export Excel',
-                        className: 'btn custom-button btn-sm me-1',
-                        action: function () {
-                            const bulan = $('#filterBulan').val();
-                            const tahun = $('#filterTahun').val();
-                            const url = `{{ route('checklist.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
-                            window.location.href = url;
-                        }
-                    }
-                    @endif
-                ],
-                language: {
-                    search: "_INPUT_",
-                    searchPlaceholder: "Cari Pekerjaan",
-                    lengthMenu: "Tampilkan _MENU_ entri",
-                    info: "Menampilkan _START_ hingga _END_ dari _TOTAL_ entri",
-                    paginate: {
-                        previous: '<i class="fas fa-chevron-left"></i>',
-                        next: '<i class="fas fa-chevron-right"></i>',
-                    },
-                },
-                initComplete: function () {
-                    const searchBox = $('.dataTables_filter input');
-                    searchBox.wrap('<div class="input-group"></div>');
-                    searchBox.before('<span class="input-group-text"><i class="fas fa-search"></i></span>');
+            function initChecklistDataTable() {
+                if ($.fn.DataTable.isDataTable('#tablechecklist')) {
+                    $('#tablechecklist').DataTable().destroy();
                 }
-            });
+
+                $('#tablechecklist').DataTable({
+                    scrollX: true,
+                    scrollCollapse: true,
+                    paging: true,
+                    searching: true,
+                    scrollY: 300,
+                    ordering: false,
+                    rowGroup: {
+                        dataSrc: 0
+                    },
+                    fixedColumns: {
+                        left: 3
+                    },
+                    fixedHeader: {
+                        header: true
+                    },
+                    rowCallback: function(row, data, index) {
+                        if ($(row).hasClass('area-header-row') || $(row).hasClass('dtrg-group')) {
+                            $(row).removeClass('odd even');
+                        }
+                    },
+                    columnDefs: [
+                        { targets: 0, visible: false, className: 'text-start' },
+                        { targets: 1, width: "50px", className: "text-center nomor-column" },
+                        { targets: 2, width: "300px", className: "text-start pekerjaan-column" },
+                        { targets: 3, width: "150px", className: "periodic-column" },
+                        { targets: -1, width: "250px", className: "text-start keterangan-column" },
+                    ],
+                    dom: '<"row mb-3 align-items-center"' +
+                        '<"col-md-6 d-flex align-items-center gap-2"B>' +
+                        '<"col-md-6 text-end"f>>' +
+                        '<"row"<"col-sm-12"t>>' +
+                        '<"row mt-3"' +
+                        '<"col-sm-6"l><"col-sm-6 text-end"p>>',
+                    buttons: [
+                        @if(auth()->user()->hasPermission('checklist_create'))
+                        {
+                            text: '<i class="fas fa-plus"></i> Tambah Jadwal',
+                            className: 'btn custom-button btn-sm me-1',
+                            action: function () {
+                                $('#addJadwalOB').modal('show');
+                            }
+                        },
+                        @endif
+                        @if(auth()->user()->hasPermission('checklist'))
+                        {
+                            text: '<i class="fas fa-file-excel"></i> Export Excel',
+                            className: 'btn custom-button btn-sm me-1',
+                            action: function () {
+                                const bulan = $('#filterBulan').val();
+                                const tahun = $('#filterTahun').val();
+                                const url = `{{ route('checklist.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
+                                window.location.href = url;
+                            }
+                        }
+                        @endif
+                    ],
+                    language: {
+                        search: "_INPUT_",
+                        searchPlaceholder: "Cari Pekerjaan",
+                        lengthMenu: "Tampilkan _MENU_ entri",
+                        info: "Menampilkan _START_ hingga _END_ dari _TOTAL_ entri",
+                        paginate: {
+                            previous: '<i class="fas fa-chevron-left"></i>',
+                            next: '<i class="fas fa-chevron-right"></i>',
+                        },
+                    },
+                    initComplete: function () {
+                        const searchBox = $('.dataTables_filter input');
+                        searchBox.wrap('<div class="input-group"></div>');
+                        searchBox.before('<span class="input-group-text"><i class="fas fa-search"></i></span>');
+                    }
+                });
+            }
+
+            // Initialize on page load
+            initChecklistDataTable();
+
+            // Function to reload table wrapper content via AJAX
+            function reloadChecklistTable() {
+                const url = new URL(window.location.href);
+                url.searchParams.set('bulan', $('#filterBulan').val());
+                url.searchParams.set('tahun', $('#filterTahun').val());
+
+                $('#checklistTableContainer').load(url.toString() + ' #checklistTableContainer > *', function() {
+                    // Re-initialize DataTable and other components in the reloaded DOM
+                    initChecklistDataTable();
+                });
+            }
 
             $('.select2-taggable').select2({
                 tags: true,
@@ -888,7 +956,7 @@
                         setBtnLoading(form, false);
                         Swal.fire('Sukses!', 'Jadwal pembersihan berhasil ditambahkan!', 'success').then(() => {
                             $('#addJadwalOB').modal('hide');
-                            window.location.reload();
+                            reloadChecklistTable();
                         });
                     })
                     .fail(function(xhr) {
@@ -960,7 +1028,7 @@
                         setBtnLoading(form, false);
                         Swal.fire('Berhasil!', response.message, 'success').then(() => {
                             $('#editJadwalOB').modal('hide');
-                            window.location.reload();
+                            reloadChecklistTable();
                         });
                     },
                     error: function(xhr) {

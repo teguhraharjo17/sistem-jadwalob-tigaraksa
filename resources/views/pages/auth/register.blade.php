@@ -38,10 +38,11 @@
 
         <!--begin::Role selection-->
         <div class="fv-row mb-8">
-            <select name="role" class="form-select bg-transparent" required>
+            <select name="role_id" class="form-select bg-transparent" required>
                 <option value="">Select Role</option>
-                <option value="User">User</option>
-                <option value="Admin">Admin</option>
+                @foreach($roles as $role)
+                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                @endforeach
             </select>
         </div>
         <!--end::Role selection-->

@@ -68,4 +68,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/register', [RegisteredUserController::class, 'create'])->name('make-account');
         Route::post('/register', [RegisteredUserController::class, 'store'])->name('register');
     });
+
+    // ===========================
+    // Super Admin Only
+    // ===========================
+    Route::prefix('superadmin')->name('superadmin.')->middleware('can:isSuperAdmin')->group(function () {
+        Route::get('sidebar-menu', function () {
+            return view('layout.partials.sidebar-layout.sidebar._menu');
+        })->name('sidebar-menu');
+        Route::resource('roles', \App\Http\Controllers\RoleController::class)->except(['create', 'show']);
+        Route::resource('users', \App\Http\Controllers\UserController::class)->except(['create', 'show']);
+    });
 });

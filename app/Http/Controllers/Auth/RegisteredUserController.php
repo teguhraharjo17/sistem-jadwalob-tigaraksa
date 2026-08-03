@@ -20,13 +20,15 @@ class RegisteredUserController extends Controller
      */
     public function create()
     {
-        if (Auth::user()->role !== 'Admin') {
+        if (!Auth::user()->hasRole('Admin') && !Auth::user()->hasRole('Super Admin')) {
             abort(403);
         }
 
+        $roles = \App\Models\Role::all();
+
         addJavascriptFile('assets/js/custom/authentication/sign-up/general.js');
 
-        return view('pages.auth.register');
+        return view('pages.auth.register', compact('roles'));
     }
 
     /**
@@ -42,14 +44,14 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users'],
-            'role' => ['required', 'in:Admin,User'],
+            'role_id' => ['required', 'exists:roles,id'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'username' => $request->username,
-            'role' => $request->role,
+            'role_id' => $request->role_id,
             'password' => Hash::make($request->password),
         ]);
 

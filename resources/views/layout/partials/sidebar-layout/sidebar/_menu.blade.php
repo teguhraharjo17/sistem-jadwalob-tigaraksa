@@ -13,6 +13,7 @@
 		<!--begin::Menu-->
 		<div class="menu menu-column menu-rounded menu-sub-indention px-3" id="#kt_app_sidebar_menu" data-kt-menu="true" data-kt-menu-expand="false">
 
+			@if(auth()->user()->hasPermission('dashboard'))
 			<!--begin::Menu item - Dashboard-->
 			<div class="menu-item">
 				<a class="menu-link {{ request()->routeIs('dashboard.index') ? 'active' : '' }}" href="{{ route('dashboard.index') }}">
@@ -21,7 +22,9 @@
 				</a>
 			</div>
 			<!--end::Menu item-->
+			@endif
 
+			@if(auth()->user()->hasPermission('checklist') || auth()->user()->hasPermission('laporanharian'))
 			<!--begin::Menu section title-->
 			<div class="menu-item pt-5">
 				<div class="menu-content">
@@ -29,7 +32,9 @@
 				</div>
 			</div>
 			<!--end::Menu section title-->
+			@endif
 
+			@if(auth()->user()->hasPermission('checklist'))
 			<!--begin::Menu item - Checklist Area Pembersihan-->
 			<div class="menu-item">
 				<a class="menu-link {{ request()->routeIs('checklist.index') ? 'active' : '' }}" href="{{ route('checklist.index') }}">
@@ -38,7 +43,9 @@
 				</a>
 			</div>
 			<!--end::Menu item-->
+			@endif
 
+			@if(auth()->user()->hasPermission('laporanharian'))
 			<!--begin::Menu item - Laporan Kerja Harian-->
 			<div class="menu-item">
 				<a class="menu-link {{ request()->routeIs('laporanharian.index') ? 'active' : '' }}" href="{{ route('laporanharian.index') }}">
@@ -47,6 +54,35 @@
 				</a>
 			</div>
 			<!--end::Menu item-->
+			@endif
+
+			@if(auth()->user()->hasPermission('master_data'))
+			<!--begin::Menu section title - Master Data-->
+			<div class="menu-item pt-5">
+				<div class="menu-content">
+					<span class="menu-heading fw-bold text-uppercase fs-7">Master Data</span>
+				</div>
+			</div>
+			<!--end::Menu section title-->
+
+			<!--begin::Menu item - Master Role-->
+			<div class="menu-item">
+				<a class="menu-link {{ request()->routeIs('superadmin.roles.*') ? 'active' : '' }}" href="{{ route('superadmin.roles.index') }}">
+					<span class="menu-icon">{!! getIcon('setting-2', 'fs-2') !!}</span>
+					<span class="menu-title">Master Role</span>
+				</a>
+			</div>
+			<!--end::Menu item-->
+
+			<!--begin::Menu item - Master User-->
+			<div class="menu-item">
+				<a class="menu-link {{ request()->routeIs('superadmin.users.*') ? 'active' : '' }}" href="{{ route('superadmin.users.index') }}">
+					<span class="menu-icon">{!! getIcon('user', 'fs-2') !!}</span>
+					<span class="menu-title">Master User</span>
+				</a>
+			</div>
+			<!--end::Menu item-->
+			@endif
 
 		</div>
 		<!--end::Menu-->

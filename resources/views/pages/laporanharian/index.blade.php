@@ -165,7 +165,7 @@
                             <th rowspan="2" class="text-center">Bukti</th>
                             <th rowspan="2" class="text-center">Hasil Pekerjaan</th>
                             <th colspan="2" class="text-center">Mengetahui</th>
-                            @if(auth()->user()->hasRole('Admin'))
+                            @if(auth()->user()->hasPermission('laporanharian_edit') || auth()->user()->hasPermission('laporanharian_approve'))
                                 <th rowspan="2" class="text-center">Opsi</th>
                             @endif
                         </tr>
@@ -356,36 +356,12 @@
                                     </tbody>
                                 </table>
 
-                                <button type="button" class="btn btn-sm btn-secondary" onclick="addEditBuktiRow()">+ Tambah Bukti</button>
+                                <button type="button" class="btn btn-sm btn-secondary" id="btnTambahBuktiRow" onclick="addEditBuktiRow()">+ Tambah Bukti</button>
 
                                 <div id="preview_bukti_existing" class="mt-2">
                                 </div>
                             </div>
 
-                            <fieldset class="border p-3 mb-3">
-                                <legend class="w-auto px-2">Kolom Persetujuan</legend>
-
-                                <div class="mb-3">
-                                    <label for="edit_hasil_pekerjaan" class="form-label">Hasil Pekerjaan</label>
-                                    <input type="text" class="form-control" id="edit_hasil_pekerjaan" name="hasil_pekerjaan">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="edit_mengetahui" class="form-label">Mengetahui</label>
-                                    <input type="text" class="form-control" id="edit_mengetahui" name="mengetahui">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label">Paraf (Upload atau Gambar)</label>
-
-                                    <input type="file" class="form-control mb-2" id="edit_paraf" name="paraf" accept="image/*">
-                                    <div id="preview_paraf" class="mb-2"></div>
-
-                                    <canvas id="editSignatureCanvas" class="border" style="width: 100%; height: 200px;"></canvas>
-                                    <input type="hidden" name="paraf_signature_edit" id="paraf_signature_edit">
-                                    <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="clearEditSignature()">Hapus</button>
-                                </div>
-                            </fieldset>
                         </div>
 
                         <div class="modal-footer">
@@ -393,6 +369,83 @@
                             <button type="submit" class="btn btn-primary">Update</button>
                         </div>
                     </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal: Persetujuan Laporan Harian (Supervisor) -->
+        <div class="modal fade" id="approveLaporanModal" tabindex="-1" aria-labelledby="approveLaporanModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="approveLaporanModalLabel">Persetujuan / Paraf Laporan Harian</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Readonly Info Card of Laporan Harian -->
+                        <div class="card bg-light border-0 mb-4 shadow-sm">
+                            <div class="card-body p-4">
+                                <h6 class="fw-bold mb-3 text-primary"><i class="fas fa-file-alt text-primary me-2"></i> Rincian Pekerjaan</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <span class="text-muted d-block fs-8">Tanggal / Shift:</span>
+                                        <span class="fw-bold text-gray-900 fs-7" id="approve_info_tanggal_shift">-</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted d-block fs-8">Jam Kerja:</span>
+                                        <span class="fw-bold text-gray-900 fs-7" id="approve_info_jam">-</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted d-block fs-8">Item Pekerjaan:</span>
+                                        <span class="fw-bold text-gray-900 fs-7" id="approve_info_pekerjaan">-</span>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <span class="text-muted d-block fs-8">Area:</span>
+                                        <span class="fw-bold text-gray-900 fs-7" id="approve_info_area">-</span>
+                                    </div>
+                                    <div class="col-12">
+                                        <span class="text-muted d-block fs-8 mb-1">Bukti Kerja:</span>
+                                        <div id="approve_info_bukti" class="d-flex flex-wrap gap-2"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Approval Inputs Form -->
+                        <form id="formApproveLaporan" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            @method('PUT')
+                            
+                            <div class="mb-4">
+                                <label for="approve_hasil_pekerjaan" class="form-label fw-bold text-gray-800">Hasil Pekerjaan <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-solid" id="approve_hasil_pekerjaan" name="hasil_pekerjaan" placeholder="Contoh: Selesai dengan rapi dan bersih" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="approve_mengetahui" class="form-label fw-bold text-gray-800">Mengetahui (Nama Supervisor) <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-solid" id="approve_mengetahui" name="mengetahui" placeholder="Nama Supervisor / Pemberi Persetujuan" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold text-gray-800">Paraf / Tanda Tangan <span class="text-danger">*</span></label>
+                                
+                                <div id="preview_paraf_approve" class="mb-2"></div>
+
+                                <div class="border rounded bg-white p-2">
+                                    <canvas id="approveSignatureCanvas" class="border rounded" style="width: 100%; height: 180px; touch-action: none; background-color: #fafafa;"></canvas>
+                                </div>
+                                <input type="hidden" name="paraf_signature" id="paraf_signature">
+                                <div class="mt-2 text-end">
+                                    <button type="button" class="btn btn-sm btn-light-danger fw-bold" onclick="clearApproveSignature()"><i class="fas fa-eraser me-1"></i> Bersihkan Paraf</button>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-footer px-0 pb-0 pt-4 border-top">
+                                <button type="button" class="btn btn-light btn-sm fw-bold" data-bs-dismiss="modal">Batal</button>
+                                <button type="submit" class="btn btn-primary btn-sm fw-bold"><i class="fas fa-check-double me-1"></i> Simpan Persetujuan</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
@@ -942,7 +995,7 @@
         const editUrlTemplate = "{{ route('laporanharian.edit', ':id') }}";
         const updateUrlTemplate = "{{ route('laporanharian.update', ':id') }}";
         const storageBaseUrl = @json(asset('storage'));
-        let editSignaturePad;
+        let approveSignaturePad;
         let approvalPad;
 
         function resizeCanvas(canvas, signaturePadInstance) {
@@ -1015,9 +1068,55 @@
         });
 
         $(document).ready(function () {
-            const editCanvas = document.getElementById("editSignatureCanvas");
-            editSignaturePad = new SignaturePad(editCanvas);
-            resizeCanvas(editCanvas, editSignaturePad);
+            // formTambahLaporanHarian AJAX Submit
+            $('#formTambahLaporanHarian').on('submit', function (e) {
+                e.preventDefault();
+                const form = this;
+                const formData = new FormData(form);
+                const btn = $(form).find('button[type="submit"]');
+                btn.attr('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...');
+
+                $.ajax({
+                    url: $(form).attr('action'),
+                    method: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        btn.removeAttr('disabled').html('<i class="fas fa-save me-1"></i> Simpan');
+                        $('#addLaporanHarian').modal('hide');
+                        form.reset();
+                        // Reset Select2 fields inside the form
+                        $('#item_pekerjaan').val(null).trigger('change');
+                        $('#area').val(null).trigger('change');
+                        
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil',
+                            text: res.message || 'Laporan Harian berhasil disimpan!',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        
+                        // Reload Datatable dynamically
+                        $('#tableLaporanHarian').DataTable().ajax.reload(null, false);
+                    },
+                    error: function (xhr) {
+                        btn.removeAttr('disabled').html('<i class="fas fa-save me-1"></i> Simpan');
+                        let message = 'Gagal menyimpan laporan.';
+                        if (xhr.responseJSON?.errors) {
+                            message += '\n' + Object.values(xhr.responseJSON.errors).flat().join('\n');
+                        } else if (xhr.responseJSON?.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        Swal.fire('Error', message, 'error');
+                    }
+                });
+            });
+
+            const approveCanvas = document.getElementById("approveSignatureCanvas");
+            approveSignaturePad = new SignaturePad(approveCanvas);
+            resizeCanvas(approveCanvas, approveSignaturePad);
             const canvas = document.getElementById('approvalCanvas');
             approvalPad = new SignaturePad(canvas);
 
@@ -1050,7 +1149,7 @@
                     { data: 'hasil_pekerjaan', name: 'hasil_pekerjaan' },
                     { data: 'mengetahui', name: 'mengetahui' },
                     { data: 'paraf', name: 'paraf', orderable:false, searchable:false },
-                    @if(auth()->user()->hasRole('Admin'))
+                    @if(auth()->user()->hasPermission('laporanharian_edit') || auth()->user()->hasPermission('laporanharian_approve'))
                         { data: 'opsi', name: 'opsi', orderable:false, searchable:false },
                     @endif
                 ],
@@ -1061,6 +1160,7 @@
                     '<"row mt-3"' +
                     '<"col-sm-6"l><"col-sm-6 text-end"p>>',
                 buttons: [
+                    @if(auth()->user()->hasPermission('laporanharian_create'))
                     {
                         text: '<i class="fas fa-plus"></i> Tambah Laporan',
                         className: 'btn custom-button btn-sm me-1',
@@ -1068,12 +1168,13 @@
                             $('#addLaporanHarian').modal('show');
                         }
                     },
+                    @endif
                     {
                         extend: 'colvis',
                         text: '<i class="fas fa-columns"></i> Column Visible',
                         className: 'btn custom-button btn-sm me-1',
                     },
-                    @if(auth()->user()->hasRole('Admin'))
+                    @if(auth()->user()->hasPermission('laporanharian'))
                     {
                         text: '<i class="fas fa-file-excel"></i> Export Excel',
                         className: 'btn custom-button btn-sm me-1',
@@ -1222,30 +1323,102 @@
                             `);
                         });
                     } else {
-                        $('#editBuktiBody').html(''); // kosongkan tabel jika tidak ada bukti
+                        $('#editBuktiBody').html('');
                     }
+
+                    $('#editLaporanLabel').text('Edit Laporan Harian');
+                    
+                    // Enable details fields
+                    $('#edit_tanggal').removeAttr('readonly');
+                    $('input[name="edit_shift"]').removeAttr('disabled');
+                    $('#edit_jam_mulai').removeAttr('readonly');
+                    $('#edit_jam_selesai').removeAttr('readonly');
+                    $('#edit_item_pekerjaan').removeAttr('disabled');
+                    $('#edit_area').removeAttr('disabled');
+                    $('#btnTambahBuktiRow').show();
+                    
+                    // Handle approval fields availability based on user permission laporanharian_approve
+                    @if(auth()->user()->hasPermission('laporanharian_approve'))
+                        $('#edit_hasil_pekerjaan').removeAttr('readonly');
+                        $('#edit_mengetahui').removeAttr('readonly');
+                        $('#editParafContainer').show();
+                        $('#btnClearEditSignature').show();
+                    @else
+                        $('#edit_hasil_pekerjaan').attr('readonly', true);
+                        $('#edit_mengetahui').attr('readonly', true);
+                        $('#editParafContainer').hide();
+                        $('#btnClearEditSignature').hide();
+                    @endif
+
                     $('#editLaporanModal').modal('show');
                 });
             });
 
-            function clearEditSignature() {
-                editSignaturePad.clear();
-                $("#paraf_signature_edit").val('');
-            }
+            $(document).on('click', '.approve-btn', function () {
+                let id = $(this).data('id');
+                let editUrl = editUrlTemplate.replace(':id', id);
+                let updateUrl = updateUrlTemplate.replace(':id', id);
+
+                $.get(editUrl, function (data) {
+                    let laporan = data.laporan;
+
+                    $('#formApproveLaporan').attr('action', updateUrl);
+                    
+                    const formattedTanggal = laporan.tanggal ? new Date(laporan.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
+                    $('#approve_info_tanggal_shift').text(`${formattedTanggal} (Shift ${laporan.shift})`);
+                    $('#approve_info_jam').text(`${laporan.jam_mulai} s.d ${laporan.jam_selesai}`);
+                    $('#approve_info_pekerjaan').text(laporan.pekerjaan ?? '-');
+                    $('#approve_info_area').text(laporan.area ?? '-');
+                    
+                    $('#approve_hasil_pekerjaan').val(laporan.hasil_pekerjaan ?? '');
+                    $('#approve_mengetahui').val(laporan.mengetahui ?? '');
+
+                    $('#approve_info_bukti').html('');
+                    if (laporan.bukti_list && laporan.bukti_list.length) {
+                        laporan.bukti_list.forEach(function (bukti) {
+                            const ekstensi = bukti.split('.').pop().toLowerCase();
+                            const url = `${storageBaseUrl}/${bukti}`;
+                            
+                            if (['jpg', 'jpeg', 'png'].includes(ekstensi)) {
+                                $('#approve_info_bukti').append(`<img src="${url}" alt="Bukti" class="img-thumbnail bukti-thumb" style="max-height: 100px; cursor: pointer;">`);
+                            } else if (ekstensi === 'pdf') {
+                                $('#approve_info_bukti').append(`<a href="${url}" target="_blank" class="badge bg-secondary d-flex align-items-center p-3 fs-8"><i class="fas fa-file-pdf me-1"></i> Lihat PDF</a>`);
+                            }
+                        });
+                    } else {
+                        $('#approve_info_bukti').text('Tidak ada bukti kerja.');
+                    }
+
+                    if (laporan.paraf) {
+                        $('#preview_paraf_approve').html(`<div class="mb-2 text-muted fs-9">Paraf saat ini:</div><img src="${storageBaseUrl}/${laporan.paraf}" class="img-paraf-preview border rounded p-1 mb-3" style="max-height: 80px;" alt="Paraf">`);
+                    } else {
+                        $('#preview_paraf_approve').html('');
+                    }
+
+                    if (typeof approveSignaturePad !== 'undefined') {
+                        approveSignaturePad.clear();
+                    }
+                    $('#paraf_signature').val('');
+
+                    $('#approveLaporanModal').modal('show');
+                });
+            });
 
             $('#formEditLaporan')
             .off('submit')
             .on('submit', function (e) {
                 e.preventDefault();
 
-                if (!editSignaturePad.isEmpty()) {
-                    const dataUrl = editSignaturePad.toDataURL();
-                    $('#paraf_signature_edit').val(dataUrl);
-                }
-
                 const form = this;
                 const formData = new FormData(form);
                 const actionUrl = $(form).attr('action');
+                const btn = $(form).find('button[type="submit"]');
+                btn.attr('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...');
+
+                if (typeof editSignaturePad !== 'undefined' && !editSignaturePad.isEmpty()) {
+                    const dataUrl = editSignaturePad.toDataURL();
+                    formData.append('paraf_signature_edit', dataUrl);
+                }
 
                 $.ajax({
                     url: actionUrl,
@@ -1253,22 +1426,25 @@
                     data: formData,
                     processData: false,
                     contentType: false,
-                    success: function () {
+                    success: function (res) {
+                        btn.removeAttr('disabled').html('<i class="fas fa-save me-1"></i> Perbarui');
                         $('#editLaporanModal').modal('hide');
                         Swal.fire({
                             icon: 'success',
                             title: 'Berhasil',
-                            text: 'Laporan berhasil diperbarui!',
+                            text: res.message || 'Laporan berhasil diperbarui!',
                             timer: 1500,
                             showConfirmButton: false
-                        }).then(() => {
-                            location.reload();
                         });
+                        $('#tableLaporanHarian').DataTable().ajax.reload(null, false);
                     },
                     error: function (xhr) {
+                        btn.removeAttr('disabled').html('<i class="fas fa-save me-1"></i> Perbarui');
                         let message = 'Gagal memperbarui laporan.';
                         if (xhr.responseJSON?.errors) {
                             message += '\n' + Object.values(xhr.responseJSON.errors).flat().join('\n');
+                        } else if (xhr.responseJSON?.message) {
+                            message = xhr.responseJSON.message;
                         }
                         Swal.fire('Error', message, 'error');
                         console.error(xhr.responseText);
@@ -1276,13 +1452,68 @@
                 });
             });
 
-            $('#editLaporanModal').on('shown.bs.modal', function () {
-                resizeCanvas(editCanvas, editSignaturePad);
+            // Submit Handler for Persetujuan Form
+            $('#formApproveLaporan')
+            .off('submit')
+            .on('submit', function (e) {
+                e.preventDefault();
+
+                if (approveSignaturePad.isEmpty() && $('#preview_paraf_approve img').length === 0) {
+                    Swal.fire('Error', 'Paraf/Tanda tangan wajib diisi.', 'error');
+                    return;
+                }
+
+                if (!approveSignaturePad.isEmpty()) {
+                    const dataUrl = approveSignaturePad.toDataURL();
+                    $('#paraf_signature').val(dataUrl);
+                }
+
+                const form = this;
+                const formData = new FormData(form);
+                const actionUrl = $(form).attr('action');
+                const btn = $(form).find('button[type="submit"]');
+                btn.attr('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...');
+
+                $.ajax({
+                    url: actionUrl,
+                    method: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        btn.removeAttr('disabled').html('<i class="fas fa-check-double me-1"></i> Simpan Persetujuan');
+                        $('#approveLaporanModal').modal('hide');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil',
+                            text: res.message || 'Persetujuan berhasil disimpan!',
+                            timer: 1500,
+                            showConfirmButton: false
+                        });
+                        $('#tableLaporanHarian').DataTable().ajax.reload(null, false);
+                    },
+                    error: function (xhr) {
+                        btn.removeAttr('disabled').html('<i class="fas fa-check-double me-1"></i> Simpan Persetujuan');
+                        let message = 'Gagal menyimpan persetujuan.';
+                        if (xhr.responseJSON?.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        Swal.fire('Error', message, 'error');
+                    }
+                });
             });
 
-            window.clearEditSignature = function () {
-                editSignaturePad.clear();
-                $("#paraf_signature_edit").val('');
+            $('#approveLaporanModal').on('shown.bs.modal', function () {
+                const canvasEl = document.getElementById("approveSignatureCanvas");
+                if (canvasEl) {
+                    resizeCanvas(canvasEl, approveSignaturePad);
+                }
+            });
+
+            window.clearApproveSignature = function () {
+                approveSignaturePad.clear();
+                $("#paraf_signature").val('');
+                $("#preview_paraf_approve").html('');
             }
 
             $('#formApproval').on('submit', function (e) {
@@ -1448,9 +1679,8 @@
                             _token: '{{ csrf_token() }}'
                         },
                         success: function (res) {
-                            Swal.fire('Terhapus!', res.message, 'success').then(() => {
-                                location.reload();
-                            });
+                            Swal.fire('Terhapus!', res.message, 'success');
+                            $('#tableLaporanHarian').DataTable().ajax.reload(null, false);
                         },
                         error: function () {
                             Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus data.', 'error');

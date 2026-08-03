@@ -100,6 +100,10 @@ class ChecklistController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->hasPermission('checklist_create')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $validated = $request->validate([
             'area' => 'required|string|max:255',
             'pekerjaan' => 'required|string|max:255',
@@ -234,6 +238,10 @@ class ChecklistController extends Controller
 
     public function edit($id)
     {
+        if (!auth()->user()->hasPermission('checklist_edit')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $checklist = Checklist::findOrFail($id);
         $areas = Checklist::select('area')->distinct()->pluck('area');
 
@@ -245,6 +253,10 @@ class ChecklistController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!auth()->user()->hasPermission('checklist_edit')) {
+            abort(403, 'Unauthorized action.');
+        }
+
         $validated = $request->validate([
             'area' => 'required|string|max:255',
             'pekerjaan' => 'required|string|max:255',
