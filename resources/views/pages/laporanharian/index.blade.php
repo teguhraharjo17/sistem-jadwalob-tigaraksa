@@ -1365,9 +1365,9 @@
                     $('#formApproveLaporan').attr('action', updateUrl);
                     
                     const formattedTanggal = laporan.tanggal ? new Date(laporan.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-';
-                    $('#approve_info_tanggal_shift').text(`${formattedTanggal} (Shift ${laporan.shift})`);
+                    $('#approve_info_tanggal_shift').text(`${formattedTanggal} (${laporan.shift})`);
                     $('#approve_info_jam').text(`${laporan.jam_mulai} s.d ${laporan.jam_selesai}`);
-                    $('#approve_info_pekerjaan').text(laporan.pekerjaan ?? '-');
+                    $('#approve_info_pekerjaan').text(laporan.rincian_pekerjaan ?? '-');
                     $('#approve_info_area').text(laporan.area ?? '-');
                     
                     $('#approve_hasil_pekerjaan').val(laporan.hasil_pekerjaan ?? '');
