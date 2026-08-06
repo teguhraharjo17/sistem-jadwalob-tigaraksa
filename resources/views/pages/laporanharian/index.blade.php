@@ -998,12 +998,57 @@
         let approveSignaturePad;
         let approvalPad;
 
+        function refreshPageSections() {
+            // Reload Datatable dynamically
+            $('#tableLaporanHarian').DataTable().ajax.reload(null, false);
+
+            // Fetch current page content to update stats and schedules
+            $.get(window.location.href, function (html) {
+                const $parsed = $(html);
+
+                // Update stats container
+                const newStats = $parsed.find('.hero-laporan__stats').html();
+                $('.hero-laporan__stats').html(newStats);
+
+                // Update schedule card container
+                const newSchedule = $parsed.find('.schedule-card').html();
+                $('.schedule-card').html(newSchedule);
+            });
+        }
+
         function resizeCanvas(canvas, signaturePadInstance) {
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
             canvas.width = canvas.offsetWidth * ratio;
             canvas.height = canvas.offsetHeight * ratio;
             canvas.getContext("2d").scale(ratio, ratio);
             signaturePadInstance.clear();
+        }
+
+        let addModalJobs = [];
+
+        function populateJobsDropdown() {
+            let selectedArea = $('#area').val();
+            let $pekerjaanSelect = $('#item_pekerjaan');
+            let currentSelectedJobId = $pekerjaanSelect.val();
+
+            // Clear options, keep placeholder
+            $pekerjaanSelect.empty().append('<option value="" disabled selected>Pilih Item Pekerjaan</option>');
+
+            let filteredJobs = addModalJobs;
+            if (selectedArea) {
+                filteredJobs = addModalJobs.filter(job => job.area === selectedArea);
+            }
+
+            if (filteredJobs.length === 0) {
+                $pekerjaanSelect.append('<option value="" disabled>Tidak ada pekerjaan</option>');
+            } else {
+                filteredJobs.forEach(item => {
+                    let isSelected = item.id == currentSelectedJobId ? 'selected' : '';
+                    $pekerjaanSelect.append(`<option value="${item.id}" data-area="${item.area}" ${isSelected}>${item.pekerjaan}</option>`);
+                });
+            }
+
+            $pekerjaanSelect.trigger('change');
         }
 
         function loadPekerjaanList(tanggal, shift) {
@@ -1016,26 +1061,20 @@
             }
 
             $.get(`{{ route('laporanharian.pekerjaan-tersedia') }}`, { tanggal, shift }, function (data) {
-                let $pekerjaanSelect = $('#item_pekerjaan');
-                $pekerjaanSelect.empty().append('<option value="" disabled selected>Pilih Item Pekerjaan</option>');
+                addModalJobs = data;
+                populateJobsDropdown();
 
                 if (data.length === 0) {
-                    $pekerjaanSelect.append('<option value="" disabled>Tidak ada pekerjaan</option>');
                     if (hint) {
                         hint.textContent = 'Tidak ada pekerjaan terjadwal pada tanggal dan shift yang dipilih.';
                         hint.classList.add('text-danger');
                     }
                 } else {
-                    data.forEach(item => {
-                        $pekerjaanSelect.append(`<option value="${item.id}">${item.pekerjaan}</option>`);
-                    });
                     if (hint) {
                         hint.textContent = `${data.length} item pekerjaan tersedia untuk dipilih.`;
                         hint.classList.remove('text-danger');
                     }
                 }
-
-                $pekerjaanSelect.trigger('change');
             }).fail(function () {
                 if (hint) {
                     hint.textContent = 'Gagal memuat item pekerjaan. Silakan coba lagi.';
@@ -1044,30 +1083,55 @@
             });
         }
 
-        // Trigger saat tanggal atau shift berubah
-        $('#tanggal').on('change', function () {
-            const tanggal = $(this).val();
-            const shift = $('input[name="shift"]:checked').val();
-            loadPekerjaanList(tanggal, shift);
-        });
-
-        $('input[name="shift"]').on('change', function () {
-            const shift = $(this).val();
-            const tanggal = $('#tanggal').val();
-            loadPekerjaanList(tanggal, shift);
-        });
-
-        // Optional: saat modal dibuka, kosongkan pekerjaan
-        $('#addLaporanHarian').on('show.bs.modal', function () {
-            $('#item_pekerjaan').empty().append('<option value="" disabled selected>Silakan pilih tanggal dan shift terlebih dahulu</option>');
-            const hint = document.getElementById('jobPickerHint');
-            if (hint) {
-                hint.textContent = 'Pilih tanggal dan shift untuk memuat item pekerjaan yang tersedia.';
-                hint.classList.remove('text-danger');
-            }
-        });
-
         $(document).ready(function () {
+            // Register event listeners for Add Modal
+            $('#tanggal').on('change', function () {
+                const tanggal = $(this).val();
+                const shift = $('input[name="shift"]:checked').val();
+                loadPekerjaanList(tanggal, shift);
+            });
+
+            $('input[name="shift"]').on('change', function () {
+                const shift = $(this).val();
+                const tanggal = $('#tanggal').val();
+                loadPekerjaanList(tanggal, shift);
+            });
+
+            $('#area').on('change', function () {
+                let selectedArea = $(this).val();
+                let selectedJobId = $('#item_pekerjaan').val();
+                
+                if (selectedJobId) {
+                    let currentJob = addModalJobs.find(j => j.id == selectedJobId);
+                    if (currentJob && currentJob.area !== selectedArea) {
+                        $('#item_pekerjaan').val(null);
+                    }
+                }
+                populateJobsDropdown();
+            });
+
+            $('#item_pekerjaan').on('change', function () {
+                let selectedJobId = $(this).val();
+                if (selectedJobId) {
+                    let job = addModalJobs.find(j => j.id == selectedJobId);
+                    if (job && job.area) {
+                        if ($('#area').val() !== job.area) {
+                            $('#area').val(job.area).trigger('change');
+                        }
+                    }
+                }
+            });
+
+            $('#addLaporanHarian').on('show.bs.modal', function () {
+                addModalJobs = [];
+                $('#item_pekerjaan').empty().append('<option value="" disabled selected>Silakan pilih tanggal dan shift terlebih dahulu</option>');
+                $('#area').val(null).trigger('change');
+                const hint = document.getElementById('jobPickerHint');
+                if (hint) {
+                    hint.textContent = 'Pilih tanggal dan shift untuk memuat item pekerjaan yang tersedia.';
+                    hint.classList.remove('text-danger');
+                }
+            });
             // formTambahLaporanHarian AJAX Submit
             $('#formTambahLaporanHarian').on('submit', function (e) {
                 e.preventDefault();
@@ -1096,10 +1160,9 @@
                             text: res.message || 'Laporan Harian berhasil disimpan!',
                             timer: 1500,
                             showConfirmButton: false
+                        }).then(() => {
+                            refreshPageSections();
                         });
-                        
-                        // Reload Datatable dynamically
-                        $('#tableLaporanHarian').DataTable().ajax.reload(null, false);
                     },
                     error: function (xhr) {
                         btn.removeAttr('disabled').html('<i class="fas fa-save me-1"></i> Simpan');
@@ -1256,6 +1319,58 @@
                 width: "100%"
             });
 
+            let editModalJobs = [];
+
+            function populateEditJobsDropdown() {
+                let selectedArea = $('#edit_area').val();
+                let $pekerjaanSelect = $('#edit_item_pekerjaan');
+                let currentSelectedJobId = $pekerjaanSelect.val();
+
+                // Clear options, keep placeholder
+                $pekerjaanSelect.empty().append('<option value="" disabled selected>Pilih Item Pekerjaan</option>');
+
+                let filteredJobs = editModalJobs;
+                if (selectedArea) {
+                    filteredJobs = editModalJobs.filter(job => job.area === selectedArea);
+                }
+
+                if (filteredJobs.length === 0) {
+                    $pekerjaanSelect.append('<option value="" disabled>Tidak ada pekerjaan</option>');
+                } else {
+                    filteredJobs.forEach(item => {
+                        let isSelected = item.id == currentSelectedJobId ? 'selected' : '';
+                        $pekerjaanSelect.append(`<option value="${item.id}" data-area="${item.area}" ${isSelected}>${item.pekerjaan}</option>`);
+                    });
+                }
+
+                $pekerjaanSelect.trigger('change');
+            }
+
+            $('#edit_area').on('change', function () {
+                let selectedArea = $(this).val();
+                let selectedJobId = $('#edit_item_pekerjaan').val();
+                
+                if (selectedJobId) {
+                    let currentJob = editModalJobs.find(j => j.id == selectedJobId);
+                    if (currentJob && currentJob.area !== selectedArea) {
+                        $('#edit_item_pekerjaan').val(null);
+                    }
+                }
+                populateEditJobsDropdown();
+            });
+
+            $('#edit_item_pekerjaan').on('change', function () {
+                let selectedJobId = $(this).val();
+                if (selectedJobId) {
+                    let job = editModalJobs.find(j => j.id == selectedJobId);
+                    if (job && job.area) {
+                        if ($('#edit_area').val() !== job.area) {
+                            $('#edit_area').val(job.area).trigger('change');
+                        }
+                    }
+                }
+            });
+
             $(document).on('click', '.edit-btn', function () {
                 let id = $(this).data('id');
                 let editUrl = editUrlTemplate.replace(':id', id);
@@ -1269,6 +1384,9 @@
                     $(`#edit_shift${laporan.shift}`).prop('checked', true);
                     $('#edit_jam_mulai').val(laporan.jam_mulai);
                     $('#edit_jam_selesai').val(laporan.jam_selesai);
+                    
+                    editModalJobs = data.pekerjaanList;
+
                     let areaOptions = '<option value="" disabled>Pilih Area</option>';
                     data.areaList.forEach(function(area) {
                         const selected = (laporan.area === area) ? 'selected' : '';
@@ -1278,12 +1396,9 @@
                     $('#edit_hasil_pekerjaan').val(laporan.hasil_pekerjaan ?? '');
                     $('#edit_mengetahui').val(laporan.mengetahui ?? '');
 
-                    let pekerjaanOptions = '';
-                    data.pekerjaanList.forEach(function (p) {
-                        let selected = laporan.checklist_id == p.id ? 'selected' : '';
-                        pekerjaanOptions += `<option value="${p.id}" ${selected}>${p.pekerjaan}</option>`;
-                    });
-                    $('#edit_item_pekerjaan').html(pekerjaanOptions);
+                    // Set value of edit_item_pekerjaan before populating
+                    $('#edit_item_pekerjaan').val(laporan.checklist_id);
+                    populateEditJobsDropdown();
 
                     if (laporan.paraf) {
                         $('#preview_paraf').html(`<img src="${storageBaseUrl}/${laporan.paraf}" class="img-paraf-preview" alt="Paraf">`);
@@ -1435,8 +1550,9 @@
                             text: res.message || 'Laporan berhasil diperbarui!',
                             timer: 1500,
                             showConfirmButton: false
+                        }).then(() => {
+                            refreshPageSections();
                         });
-                        $('#tableLaporanHarian').DataTable().ajax.reload(null, false);
                     },
                     error: function (xhr) {
                         btn.removeAttr('disabled').html('<i class="fas fa-save me-1"></i> Perbarui');
@@ -1489,8 +1605,9 @@
                             text: res.message || 'Persetujuan berhasil disimpan!',
                             timer: 1500,
                             showConfirmButton: false
+                        }).then(() => {
+                            refreshPageSections();
                         });
-                        $('#tableLaporanHarian').DataTable().ajax.reload(null, false);
                     },
                     error: function (xhr) {
                         btn.removeAttr('disabled').html('<i class="fas fa-check-double me-1"></i> Simpan Persetujuan');
@@ -1679,8 +1796,9 @@
                             _token: '{{ csrf_token() }}'
                         },
                         success: function (res) {
-                            Swal.fire('Terhapus!', res.message, 'success');
-                            $('#tableLaporanHarian').DataTable().ajax.reload(null, false);
+                            Swal.fire('Terhapus!', res.message, 'success').then(() => {
+                                refreshPageSections();
+                            });
                         },
                         error: function () {
                             Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus data.', 'error');

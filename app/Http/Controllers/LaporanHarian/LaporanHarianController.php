@@ -242,7 +242,7 @@ class LaporanHarianController extends Controller
 
         $laporan->bukti_list = $buktiList; // kirim array ke JS
 
-        $pekerjaanList = Checklist::select('id', 'pekerjaan')->orderBy('pekerjaan')->get();
+        $pekerjaanList = Checklist::select('id', 'pekerjaan', 'area')->orderBy('pekerjaan')->get();
         $areaList = Checklist::select('area')->distinct()->pluck('area');
 
         return response()->json([
@@ -354,6 +354,10 @@ class LaporanHarianController extends Controller
             ])->withInput();
         }
 
+        $oldChecklistId = $laporan->checklist_id;
+        $oldTanggal = $laporan->tanggal;
+        $oldShift = $laporan->shift;
+
         // Bukti Processing
         $buktiFinal = [];
         $buktiLama = $request->input('bukti_lama', []);
@@ -389,6 +393,35 @@ class LaporanHarianController extends Controller
             'bukti' => count($buktiFinal) > 1 ? json_encode($buktiFinal) : ($buktiFinal[0] ?? null),
         ]);
 
+        $hasChanged = ($oldChecklistId != $laporan->checklist_id) || 
+                      ($oldTanggal != $laporan->tanggal) || 
+                      ($oldShift != $laporan->shift);
+
+        if ($hasChanged) {
+            $oldCombinationHasOtherReports = LaporanHarian::where('checklist_id', $oldChecklistId)
+                ->where('tanggal', $oldTanggal)
+                ->where('shift', $oldShift)
+                ->where('id', '!=', $laporan->id)
+                ->exists();
+            
+            if (!$oldCombinationHasOtherReports) {
+                ChecklistStatus::where([
+                    'checklist_id' => $oldChecklistId,
+                    'tanggal' => $oldTanggal,
+                    'shift' => $oldShift,
+                ])->update(['status' => 0]);
+            }
+        }
+
+        ChecklistStatus::updateOrCreate(
+            [
+                'checklist_id' => $laporan->checklist_id,
+                'tanggal' => $laporan->tanggal,
+                'shift' => $laporan->shift,
+            ],
+            ['status' => 1]
+        );
+
         if ($request->ajax()) {
             return response()->json(['message' => 'Laporan berhasil diperbarui.']);
         }
@@ -420,7 +453,7 @@ class LaporanHarianController extends Controller
                             ->where('default_shift', $shift);
                     });
             })
-            ->select('id', 'pekerjaan')
+            ->select('id', 'pekerjaan', 'area')
             ->orderBy('pekerjaan')
             ->get();
 
@@ -508,6 +541,20 @@ class LaporanHarianController extends Controller
                     Storage::disk('public')->delete($filePath);
                 }
             }
+        }
+
+        $otherReportsExist = LaporanHarian::where('checklist_id', $laporan->checklist_id)
+            ->where('tanggal', $laporan->tanggal)
+            ->where('shift', $laporan->shift)
+            ->where('id', '!=', $laporan->id)
+            ->exists();
+
+        if (!$otherReportsExist) {
+            ChecklistStatus::where([
+                'checklist_id' => $laporan->checklist_id,
+                'tanggal' => $laporan->tanggal,
+                'shift' => $laporan->shift,
+            ])->update(['status' => 0]);
         }
 
         $laporan->delete();
