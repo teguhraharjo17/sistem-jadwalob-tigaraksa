@@ -431,12 +431,39 @@
                                 
                                 <div id="preview_paraf_approve" class="mb-2"></div>
 
-                                <div class="border rounded bg-white p-2">
-                                    <canvas id="approveSignatureCanvas" class="border rounded" style="width: 100%; height: 180px; touch-action: none; background-color: #fafafa;"></canvas>
-                                </div>
-                                <input type="hidden" name="paraf_signature" id="paraf_signature">
-                                <div class="mt-2 text-end">
-                                    <button type="button" class="btn btn-sm btn-light-danger fw-bold" onclick="clearApproveSignature()"><i class="fas fa-eraser me-1"></i> Bersihkan Paraf</button>
+                                <!-- Signature Mode Tabs -->
+                                <ul class="nav nav-tabs nav-line-tabs mb-3 fs-6" id="signatureTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active fw-bold py-2 px-3" id="canvas-tab" data-bs-toggle="tab" data-bs-target="#canvas-panel" type="button" role="tab" aria-controls="canvas-panel" aria-selected="true">
+                                            <i class="fas fa-signature me-1"></i> Tulis Langsung
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link fw-bold py-2 px-3" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-panel" type="button" role="tab" aria-controls="upload-panel" aria-selected="false">
+                                            <i class="fas fa-upload me-1"></i> Unggah Gambar
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content" id="signatureTabsContent">
+                                    <!-- Canvas Panel -->
+                                    <div class="tab-pane fade show active" id="canvas-panel" role="tabpanel" aria-labelledby="canvas-tab">
+                                        <div class="border rounded bg-white p-2">
+                                            <canvas id="approveSignatureCanvas" class="border rounded" style="width: 100%; height: 180px; touch-action: none; background-color: #fafafa;"></canvas>
+                                        </div>
+                                        <input type="hidden" name="paraf_signature" id="paraf_signature">
+                                        <div class="mt-2 text-end">
+                                            <button type="button" class="btn btn-sm btn-light-danger fw-bold" onclick="clearApproveSignature()"><i class="fas fa-eraser me-1"></i> Bersihkan Paraf</button>
+                                        </div>
+                                    </div>
+                                    <!-- Upload Panel -->
+                                    <div class="tab-pane fade" id="upload-panel" role="tabpanel" aria-labelledby="upload-tab">
+                                        <div class="border rounded bg-white p-4 text-center">
+                                            <input type="file" name="paraf" id="approve_paraf_file" class="form-control" accept="image/jpeg,image/png,image/jpg" onchange="previewParafFile(this)">
+                                            <div class="text-muted mt-2 fs-9">Format: JPG, JPEG, PNG. Maks: 4MB.</div>
+                                            <div id="paraf_file_preview" class="mt-3"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -1574,14 +1601,22 @@
             .on('submit', function (e) {
                 e.preventDefault();
 
-                if (approveSignaturePad.isEmpty() && $('#preview_paraf_approve img').length === 0) {
-                    Swal.fire('Error', 'Paraf/Tanda tangan wajib diisi.', 'error');
+                let activeTab = $('#signatureTabs button.active').attr('id');
+                let hasExistingParaf = $('#preview_paraf_approve img').length > 0;
+                let hasCanvas = !approveSignaturePad.isEmpty();
+                let hasFile = $('#approve_paraf_file').val() !== '';
+
+                if (!hasExistingParaf && !hasCanvas && !hasFile) {
+                    Swal.fire('Error', 'Paraf/Tanda tangan wajib diisi (silakan tulis langsung atau unggah berkas).', 'error');
                     return;
                 }
 
-                if (!approveSignaturePad.isEmpty()) {
+                if (activeTab === 'canvas-tab' && hasCanvas) {
                     const dataUrl = approveSignaturePad.toDataURL();
                     $('#paraf_signature').val(dataUrl);
+                    $('#approve_paraf_file').val('');
+                } else if (activeTab === 'upload-tab' && hasFile) {
+                    $('#paraf_signature').val('');
                 }
 
                 const form = this;
@@ -1631,7 +1666,20 @@
                 approveSignaturePad.clear();
                 $("#paraf_signature").val('');
                 $("#preview_paraf_approve").html('');
+                $("#approve_paraf_file").val('');
+                $("#paraf_file_preview").html('');
             }
+
+            window.previewParafFile = function (input) {
+                const file = input.files[0];
+                const preview = document.getElementById('paraf_file_preview');
+                preview.innerHTML = '';
+
+                if (file && file.type.startsWith('image/')) {
+                    const objectUrl = URL.createObjectURL(file);
+                    preview.innerHTML = `<img src="${objectUrl}" alt="Preview Paraf" class="img-thumbnail border p-1" style="max-height: 120px;">`;
+                }
+            };
 
             $('#formApproval').on('submit', function (e) {
                 e.preventDefault();
