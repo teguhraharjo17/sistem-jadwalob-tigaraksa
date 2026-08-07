@@ -146,6 +146,32 @@ class ChecklistController extends Controller
     }
 
 
+    private function getNearestValidDate(Carbon $targetDate, array $holidayDates, Carbon $startOfMonth, Carbon $endOfMonth)
+    {
+        if (!$targetDate->isWeekend() && !in_array($targetDate->format('Y-m-d'), $holidayDates)) {
+            return $targetDate;
+        }
+
+        $maxSearchDays = 31;
+        // First, try searching forward
+        for ($i = 1; $i <= $maxSearchDays; $i++) {
+            $forward = $targetDate->copy()->addDays($i);
+            if ($forward->lte($endOfMonth) && !$forward->isWeekend() && !in_array($forward->format('Y-m-d'), $holidayDates)) {
+                return $forward;
+            }
+        }
+
+        // If no forward date is available in the current month, try searching backward
+        for ($i = 1; $i <= $maxSearchDays; $i++) {
+            $backward = $targetDate->copy()->subDays($i);
+            if ($backward->gte($startOfMonth) && !$backward->isWeekend() && !in_array($backward->format('Y-m-d'), $holidayDates)) {
+                return $backward;
+            }
+        }
+
+        return null;
+    }
+
     private function generateSchedule(Checklist $checklist, $holidayDates = [])
     {
         $dates = collect();
@@ -171,18 +197,19 @@ class ChecklistController extends Controller
 
             case 'per_x_hari':
                 $interval = max(1, $checklist->frequency_interval);
-                $date = $start->copy();
+                $startOfMonth = $start->copy()->startOfMonth();
+                $date = $this->getNearestValidDate($start, $holidayDates, $startOfMonth, $end);
 
-                while ($date->lte($end)) {
-                    if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
+                if ($date) {
+                    while ($date->lte($end)) {
                         $dates->push($date->copy());
-                    }
 
-                    $daysAdded = 0;
-                    while ($daysAdded < $interval && $date->lte($end)) {
-                        $date->addDay();
-                        if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
-                            $daysAdded++;
+                        $daysAdded = 0;
+                        while ($daysAdded < $interval && $date->lte($end)) {
+                            $date->addDay();
+                            if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
+                                $daysAdded++;
+                            }
                         }
                     }
                 }
@@ -190,9 +217,11 @@ class ChecklistController extends Controller
 
             case 'per_minggu':
                 $date = $start->copy();
+                $startOfMonth = $start->copy()->startOfMonth();
                 while ($date->lte($end)) {
-                    if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
-                        $dates->push($date->copy());
+                    $validDate = $this->getNearestValidDate($date, $holidayDates, $startOfMonth, $end);
+                    if ($validDate) {
+                        $dates->push($validDate->copy());
                     }
                     $date->addWeek();
                 }
@@ -201,9 +230,11 @@ class ChecklistController extends Controller
             case 'per_x_minggu':
                 $interval = max(1, $checklist->frequency_interval);
                 $date = $start->copy();
+                $startOfMonth = $start->copy()->startOfMonth();
                 while ($date->lte($end)) {
-                    if (!$date->isWeekend() && !in_array($date->format('Y-m-d'), $holidayDates)) {
-                        $dates->push($date->copy());
+                    $validDate = $this->getNearestValidDate($date, $holidayDates, $startOfMonth, $end);
+                    if ($validDate) {
+                        $dates->push($validDate->copy());
                     }
                     $date->addWeeks($interval);
                 }
@@ -212,9 +243,13 @@ class ChecklistController extends Controller
             case 'per_bulan':
                 $targetDate = Carbon::parse($checklist->start_date);
                 if ($targetDate->month == $checklist->bulan &&
-                    $targetDate->year == $checklist->tahun &&
-                    !in_array($targetDate->format('Y-m-d'), $holidayDates)) {
-                    $dates->push($targetDate);
+                    $targetDate->year == $checklist->tahun) {
+                    $startOfMonth = $targetDate->copy()->startOfMonth();
+                    $endOfMonth = $targetDate->copy()->endOfMonth();
+                    $validDate = $this->getNearestValidDate($targetDate, $holidayDates, $startOfMonth, $endOfMonth);
+                    if ($validDate) {
+                        $dates->push($validDate);
+                    }
                 }
                 break;
         }
