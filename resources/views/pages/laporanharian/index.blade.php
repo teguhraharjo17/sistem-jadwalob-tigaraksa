@@ -4,6 +4,7 @@
     @php
         $totalJadwalHariIni = count($jadwalHariIniPagi) + count($jadwalHariIniSiang);
         $totalSelesaiHariIni = collect($jadwalHariIniPagi)->where('status', 1)->count() + collect($jadwalHariIniSiang)->where('status', 1)->count();
+        $totalJadwalBesok = count($jadwalBesokPagi) + count($jadwalBesokSiang);
     @endphp
 
     <div class="container py-4 py-lg-5">
@@ -29,6 +30,10 @@
                 <div class="hero-stat-card">
                     <span>Selesai Hari Ini</span>
                     <strong>{{ $totalSelesaiHariIni }}</strong>
+                </div>
+                <div class="hero-stat-card">
+                    <span>Jadwal Besok</span>
+                    <strong class="text-primary">{{ $totalJadwalBesok }}</strong>
                 </div>
             </div>
         </section>
@@ -74,58 +79,154 @@
             <div class="row g-4 mb-4">
                 <div class="col-xl-8">
                     <div class="schedule-card">
-                        <div class="schedule-card__head">
+                        <div class="schedule-card__head flex-column flex-sm-row align-items-sm-center justify-content-between gap-3 mb-4">
                             <div>
-                                <span class="section-kicker">Hari Ini</span>
-                                <h3 class="section-title mb-1">Jadwal pekerjaan aktif</h3>
-                                <p class="text-muted mb-0">{{ \Carbon\Carbon::today()->translatedFormat('l, d F Y') }}</p>
+                                <span class="section-kicker">Agenda Kerja</span>
+                                <h3 class="section-title mb-0">Jadwal Pekerjaan OB</h3>
                             </div>
-                            <span class="schedule-badge">{{ $totalSelesaiHariIni }}/{{ $totalJadwalHariIni ?: 0 }} selesai</span>
+                            
+                            <!--begin::Nav Tabs Hari Ini / Besok-->
+                            <ul class="nav nav-pills schedule-tabs gap-2" id="scheduleTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active px-3 py-2 fs-7 fw-bold rounded-pill" 
+                                            id="tab-today" 
+                                            data-bs-toggle="pill" 
+                                            data-bs-target="#content-today" 
+                                            type="button" 
+                                            role="tab">
+                                        <i class="bi bi-calendar-check me-1"></i> Hari Ini ({{ \Carbon\Carbon::today()->translatedFormat('d M') }})
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link px-3 py-2 fs-7 fw-bold rounded-pill" 
+                                            id="tab-tomorrow" 
+                                            data-bs-toggle="pill" 
+                                            data-bs-target="#content-tomorrow" 
+                                            type="button" 
+                                            role="tab">
+                                        <i class="bi bi-calendar-plus me-1"></i> Besok ({{ \Carbon\Carbon::tomorrow()->translatedFormat('d M') }})
+                                    </button>
+                                </li>
+                            </ul>
+                            <!--end::Nav Tabs-->
                         </div>
 
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="shift-card">
-                                    <div class="shift-card__title">
-                                        <strong>Shift Pagi</strong>
-                                        <span>{{ count($jadwalHariIniPagi) }} tugas</span>
-                                    </div>
-                                    @if(count($jadwalHariIniPagi))
-                                        <div class="shift-card__list">
-                                            @foreach ($jadwalHariIniPagi as $item)
-                                                <div class="shift-task {{ $item['status'] == 1 ? 'is-done' : '' }}">
-                                                    <i class="fas {{ $item['status'] == 1 ? 'fa-check-circle' : 'fa-clock' }}"></i>
-                                                    <span>{{ $item['pekerjaan'] }}</span>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <div class="shift-card__empty">Tidak ada jadwal untuk shift pagi.</div>
-                                    @endif
+                        <!--begin::Tab Content-->
+                        <div class="tab-content" id="scheduleTabContent">
+                            
+                            <!--begin::Tab Hari Ini-->
+                            <div class="tab-pane fade show active" id="content-today" role="tabpanel" aria-labelledby="tab-today">
+                                <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+                                    <span class="text-muted fs-7"><i class="bi bi-clock me-1 text-primary"></i> {{ \Carbon\Carbon::today()->translatedFormat('l, d F Y') }}</span>
+                                    <span class="schedule-badge">{{ $totalSelesaiHariIni }}/{{ $totalJadwalHariIni ?: 0 }} selesai</span>
                                 </div>
-                            </div>
 
-                            <div class="col-md-6">
-                                <div class="shift-card">
-                                    <div class="shift-card__title">
-                                        <strong>Shift Siang</strong>
-                                        <span>{{ count($jadwalHariIniSiang) }} tugas</span>
-                                    </div>
-                                    @if(count($jadwalHariIniSiang))
-                                        <div class="shift-card__list">
-                                            @foreach ($jadwalHariIniSiang as $item)
-                                                <div class="shift-task {{ $item['status'] == 1 ? 'is-done' : '' }}">
-                                                    <i class="fas {{ $item['status'] == 1 ? 'fa-check-circle' : 'fa-clock' }}"></i>
-                                                    <span>{{ $item['pekerjaan'] }}</span>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="shift-card">
+                                            <div class="shift-card__title">
+                                                <strong><i class="bi bi-sun-fill text-warning me-1"></i> Shift Pagi</strong>
+                                                <span>{{ count($jadwalHariIniPagi) }} tugas</span>
+                                            </div>
+                                            @if(count($jadwalHariIniPagi))
+                                                <div class="shift-card__list">
+                                                    @foreach ($jadwalHariIniPagi as $item)
+                                                        <div class="shift-task {{ $item['status'] == 1 ? 'is-done' : '' }}">
+                                                            <i class="fas {{ $item['status'] == 1 ? 'fa-check-circle text-success' : 'fa-clock text-muted' }}"></i>
+                                                            <span>{{ $item['pekerjaan'] }}</span>
+                                                        </div>
+                                                    @endforeach
                                                 </div>
-                                            @endforeach
+                                            @else
+                                                <div class="shift-card__empty">Tidak ada jadwal untuk shift pagi hari ini.</div>
+                                            @endif
                                         </div>
-                                    @else
-                                        <div class="shift-card__empty">Tidak ada jadwal untuk shift siang.</div>
-                                    @endif
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="shift-card">
+                                            <div class="shift-card__title">
+                                                <strong><i class="bi bi-cloud-sun-fill text-info me-1"></i> Shift Siang</strong>
+                                                <span>{{ count($jadwalHariIniSiang) }} tugas</span>
+                                            </div>
+                                            @if(count($jadwalHariIniSiang))
+                                                <div class="shift-card__list">
+                                                    @foreach ($jadwalHariIniSiang as $item)
+                                                        <div class="shift-task {{ $item['status'] == 1 ? 'is-done' : '' }}">
+                                                            <i class="fas {{ $item['status'] == 1 ? 'fa-check-circle text-success' : 'fa-clock text-muted' }}"></i>
+                                                            <span>{{ $item['pekerjaan'] }}</span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="shift-card__empty">Tidak ada jadwal untuk shift siang hari ini.</div>
+                                            @endif
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
+                            <!--end::Tab Hari Ini-->
+
+                            <!--begin::Tab Besok-->
+                            <div class="tab-pane fade" id="content-tomorrow" role="tabpanel" aria-labelledby="tab-tomorrow">
+                                <div class="d-flex justify-content-between align-items-center mb-3 px-1">
+                                    <span class="text-muted fs-7"><i class="bi bi-calendar-event me-1 text-primary"></i> {{ \Carbon\Carbon::tomorrow()->translatedFormat('l, d F Y') }}</span>
+                                    <span class="schedule-badge bg-light-primary text-primary border border-primary border-opacity-20"><i class="bi bi-stars me-1 text-primary"></i> {{ $totalJadwalBesok }} tugas dipersiapkan</span>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="shift-card">
+                                            <div class="shift-card__title">
+                                                <strong><i class="bi bi-sun-fill text-warning me-1"></i> Shift Pagi (Besok)</strong>
+                                                <span class="text-primary fw-bold">{{ count($jadwalBesokPagi) }} tugas</span>
+                                            </div>
+                                            @if(count($jadwalBesokPagi))
+                                                <div class="shift-card__list">
+                                                    @foreach ($jadwalBesokPagi as $item)
+                                                        <div class="shift-task shift-task--tomorrow">
+                                                            <i class="bi bi-arrow-right-circle-fill text-primary fs-6 mt-1 flex-shrink-0"></i>
+                                                            <span>{{ $item['pekerjaan'] }}</span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="shift-card__empty">Belum ada jadwal pekerjaan untuk shift pagi besok.</div>
+                                            @endif
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <div class="shift-card">
+                                            <div class="shift-card__title">
+                                                <strong><i class="bi bi-cloud-sun-fill text-info me-1"></i> Shift Siang (Besok)</strong>
+                                                <span class="text-info fw-bold">{{ count($jadwalBesokSiang) }} tugas</span>
+                                            </div>
+                                            @if(count($jadwalBesokSiang))
+                                                <div class="shift-card__list">
+                                                    @foreach ($jadwalBesokSiang as $item)
+                                                        <div class="shift-task shift-task--tomorrow">
+                                                            <i class="bi bi-arrow-right-circle-fill text-info fs-6 mt-1 flex-shrink-0"></i>
+                                                            <span>{{ $item['pekerjaan'] }}</span>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            @else
+                                                <div class="shift-card__empty">Belum ada jadwal pekerjaan untuk shift siang besok.</div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex align-items-center bg-light-primary p-3 mt-3 rounded-3 border border-primary border-opacity-15">
+                                    <i class="bi bi-info-circle-fill fs-5 text-primary me-2 flex-shrink-0"></i>
+                                    <span class="fs-8 text-gray-700">Daftar pekerjaan di atas dapat dijadikan acuan persiapan sebelum pulang kerja hari ini.</span>
+                                </div>
+                            </div>
+                            <!--end::Tab Besok-->
+
                         </div>
+                        <!--end::Tab Content-->
                     </div>
                 </div>
 
@@ -955,6 +1056,30 @@
             color: #166534;
         }
 
+        .shift-task--tomorrow {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-left: 3px solid #009ef7;
+        }
+
+        .schedule-tabs .nav-link {
+            background: #eef2f7;
+            color: #4b566b;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .schedule-tabs .nav-link:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .schedule-tabs .nav-link.active {
+            background: #009ef7;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 158, 247, 0.3);
+        }
+
         .shift-card__empty {
             padding: 0.9rem 1rem;
             border-radius: 14px;
@@ -997,17 +1122,124 @@
 
         @media (max-width: 767.98px) {
             .hero-laporan {
-                padding: 1.4rem;
+                padding: 1.25rem 1rem;
+                border-radius: 18px;
+            }
+
+            .hero-laporan__title {
+                font-size: 1.45rem;
+            }
+
+            .hero-laporan__subtitle {
+                font-size: 0.84rem;
             }
 
             .hero-laporan__stats {
-                grid-template-columns: 1fr;
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.65rem;
             }
 
-            .schedule-card__head,
-            .shift-card__title {
+            .hero-stat-card {
+                padding: 0.75rem 0.85rem;
+                border-radius: 14px;
+            }
+
+            .hero-stat-card span {
+                font-size: 0.74rem;
+                margin-bottom: 0.2rem;
+            }
+
+            .hero-stat-card strong {
+                font-size: 1.15rem;
+            }
+
+            /* 5th stat card (Jadwal Besok) spans full width for balance */
+            .hero-laporan__stats .hero-stat-card:last-child {
+                grid-column: span 2;
+                background: rgba(0, 158, 247, 0.15);
+                border-color: rgba(0, 158, 247, 0.35);
+            }
+
+            .laporan-shell {
+                padding: 1rem 0.85rem !important;
+                border-radius: 16px !important;
+            }
+
+            .schedule-card,
+            .quick-guide {
+                padding: 1rem 0.85rem;
+                border-radius: 16px;
+            }
+
+            .schedule-card__head {
                 flex-direction: column;
-                align-items: flex-start;
+                align-items: stretch !important;
+                gap: 0.85rem;
+            }
+
+            .schedule-tabs {
+                display: flex;
+                width: 100%;
+                background: #f1f5f9;
+                padding: 4px;
+                border-radius: 999px;
+            }
+
+            .schedule-tabs .nav-item {
+                flex: 1;
+                text-align: center;
+            }
+
+            .schedule-tabs .nav-link {
+                width: 100%;
+                justify-content: center;
+                font-size: 0.78rem;
+                padding: 0.45rem 0.5rem;
+                border-radius: 999px;
+            }
+
+            .shift-card {
+                padding: 0.85rem;
+                border-radius: 14px;
+            }
+
+            .shift-card__title {
+                margin-bottom: 0.65rem;
+            }
+
+            .shift-task {
+                padding: 0.65rem 0.75rem;
+                font-size: 0.84rem;
+                border-radius: 10px;
+            }
+
+            .guide-point {
+                padding: 0.75rem 0.85rem;
+                font-size: 0.82rem;
+                border-radius: 12px;
+            }
+
+            .guide-point span {
+                width: 26px;
+                height: 26px;
+                font-size: 0.75rem;
+            }
+
+            .section-copy .section-title {
+                font-size: 1.15rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding-left: 0.75rem;
+                padding-right: 0.75rem;
+            }
+
+            .schedule-badge {
+                font-size: 0.74rem;
+                padding: 0.35rem 0.65rem;
             }
         }
     </style>
