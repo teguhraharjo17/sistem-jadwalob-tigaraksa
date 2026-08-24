@@ -134,8 +134,16 @@ class LaporanHarianController extends Controller
                 $fallback = asset('assets/media/svg/files/blank-image.svg');
 
                 return collect($buktiList)->map(function($b) use ($fallback) {
-                    $url = asset('storage/'.$b);
-                    return "<img src='$url' loading='lazy' onerror=\"this.onerror=null;this.src='$fallback';\" class='img-thumbnail bukti-thumb me-1 mb-1' style='max-height:80px; cursor:pointer'>";
+                    $fullUrl = asset('storage/' . $b);
+                    $dir = dirname($b);
+                    $file = basename($b);
+                    $thumbRelative = ($dir === '.' ? '' : $dir . '/') . 'thumbs/' . $file;
+
+                    $thumbUrl = file_exists(storage_path('app/public/' . $thumbRelative))
+                        ? asset('storage/' . $thumbRelative)
+                        : $fullUrl;
+
+                    return "<img src='$thumbUrl' data-full='$fullUrl' loading='lazy' onerror=\"this.onerror=null;this.src='$fallback';\" class='img-thumbnail bukti-thumb me-1 mb-1' style='max-height:80px; cursor:pointer'>";
                 })->implode('');
             })
             ->editColumn('paraf', function($row) {
@@ -343,13 +351,44 @@ class LaporanHarianController extends Controller
             $path = $folder . '/' . $filename;
             $fullPath = storage_path('app/public/' . $path);
 
-            // Ensure directory exists
+            // Ensure main directory exists
             $dir = dirname($fullPath);
             if (!file_exists($dir)) {
                 mkdir($dir, 0755, true);
             }
 
-            // Save as optimized JPEG with 75% quality
+            // Ensure thumbs directory exists
+            $thumbDir = $dir . '/thumbs';
+            if (!file_exists($thumbDir)) {
+                mkdir($thumbDir, 0755, true);
+            }
+            $thumbPath = $thumbDir . '/' . $filename;
+
+            // Generate micro thumbnail (max 150px, quality 60%)
+            $maxThumb = 150;
+            if ($width > $maxThumb || $height > $maxThumb) {
+                if ($width > $height) {
+                    $tWidth = $maxThumb;
+                    $tHeight = (int) ($height * ($maxThumb / $width));
+                } else {
+                    $tHeight = $maxThumb;
+                    $tWidth = (int) ($width * ($maxThumb / $height));
+                }
+            } else {
+                $tWidth = $width;
+                $tHeight = $height;
+            }
+
+            $thumbImage = imagecreatetruecolor($tWidth, $tHeight);
+            if (in_array($extension, ['png', 'webp'])) {
+                imagealphablending($thumbImage, false);
+                imagesavealpha($thumbImage, true);
+            }
+            imagecopyresampled($thumbImage, $image, 0, 0, 0, 0, $tWidth, $tHeight, $width, $height);
+            imagejpeg($thumbImage, $thumbPath, 60);
+            imagedestroy($thumbImage);
+
+            // Save as optimized main JPEG with 75% quality
             imagejpeg($image, $fullPath, 75);
             imagedestroy($image);
 

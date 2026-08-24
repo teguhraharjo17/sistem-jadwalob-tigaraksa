@@ -2052,7 +2052,7 @@
             };
 
             $(document).on('click', '.img-thumbnail, .img-paraf-preview', function () {
-                const src = $(this).attr('src');
+                const src = $(this).attr('data-full') || $(this).attr('src');
                 $('#modalPreviewImage').attr('src', src);
                 $('#imagePreviewModal').modal('show');
             });
