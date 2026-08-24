@@ -620,7 +620,7 @@
                 </form>
             </div>
         </div>
-        <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+        <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel">
             <div class="modal-dialog modal-dialog-centered modal-xl">
                 <div class="modal-content bg-dark">
                     <div class="modal-body p-0 position-relative text-center">
@@ -2047,7 +2047,11 @@
                 }
             });
 
-            $('#imagePreviewModal').on('hidden.bs.modal', function () {
+            $('#imagePreviewModal').on('hide.bs.modal', function () {
+                if (document.activeElement) {
+                    document.activeElement.blur();
+                }
+            }).on('hidden.bs.modal', function () {
                 $('#modalPreviewImage').css({
                     'transform': 'scale(1)',
                     'cursor': 'zoom-in'

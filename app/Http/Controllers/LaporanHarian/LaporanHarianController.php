@@ -114,15 +114,17 @@ class LaporanHarianController extends Controller
                 if (!$row->bukti) return '-';
                 $decoded = json_decode($row->bukti, true);
                 $buktiList = is_array($decoded) ? $decoded : [$row->bukti];
+                $fallback = asset('assets/media/svg/files/blank-image.svg');
 
-                return collect($buktiList)->map(function($b) {
+                return collect($buktiList)->map(function($b) use ($fallback) {
                     $url = asset('storage/'.$b);
-                    return "<img src='$url' loading='lazy' class='img-thumbnail bukti-thumb me-1 mb-1' style='max-height:80px; cursor:pointer'>";
+                    return "<img src='$url' loading='lazy' onerror=\"this.onerror=null;this.src='$fallback';\" class='img-thumbnail bukti-thumb me-1 mb-1' style='max-height:80px; cursor:pointer'>";
                 })->implode('');
             })
             ->editColumn('paraf', function($row) {
+                $fallback = asset('assets/media/svg/files/blank-image.svg');
                 return $row->paraf
-                    ? "<img src='".asset('storage/'.$row->paraf)."' loading='lazy' class='img-thumbnail img-paraf-preview' style='max-height:50px;'>"
+                    ? "<img src='".asset('storage/'.$row->paraf)."' loading='lazy' onerror=\"this.onerror=null;this.src='$fallback';\" class='img-thumbnail img-paraf-preview' style='max-height:50px;'>"
                     : '-';
             })
             ->addColumn('opsi', function($row) {
@@ -198,17 +200,17 @@ class LaporanHarianController extends Controller
             ])->withInput();
         }
 
-        // Upload file paraf
+        // Upload file paraf dengan kompresi
         $parafPath = null;
         if ($request->hasFile('paraf')) {
-            $parafPath = $request->file('paraf')->store('paraf_approve', 'public');
+            $parafPath = $this->storeCompressedImage($request->file('paraf'), 'paraf_approve');
         }
 
-        // Upload bukti kerja
+        // Upload bukti kerja dengan kompresi & resize
         $buktiPaths = [];
         if ($request->hasFile('bukti')) {
             foreach ($request->file('bukti') as $file) {
-                $buktiPaths[] = $file->store('bukti_laporan', 'public');
+                $buktiPaths[] = $this->storeCompressedImage($file, 'bukti_laporan');
             }
         }
 
@@ -248,6 +250,97 @@ class LaporanHarianController extends Controller
         return redirect()
             ->route('laporanharian.index')
             ->with('success', 'Laporan Harian berhasil disimpan.');
+    }
+
+    /**
+     * Helper function to compress and resize uploaded image using PHP GD
+     */
+    private function storeCompressedImage($file, $folder = 'bukti_laporan')
+    {
+        $extension = strtolower($file->getClientOriginalExtension());
+        
+        // If it's a PDF or non-standard image, store normally
+        if (!in_array($extension, ['jpg', 'jpeg', 'png', 'webp'])) {
+            return $file->store($folder, 'public');
+        }
+
+        try {
+            $imageString = file_get_contents($file->getRealPath());
+            $image = @imagecreatefromstring($imageString);
+
+            if (!$image) {
+                return $file->store($folder, 'public');
+            }
+
+            // Auto-rotate if EXIF orientation data exists (common on smartphones)
+            if (function_exists('exif_read_data') && in_array($extension, ['jpg', 'jpeg'])) {
+                try {
+                    $exif = @exif_read_data($file->getRealPath());
+                    if (!empty($exif['Orientation'])) {
+                        switch ($exif['Orientation']) {
+                            case 3:
+                                $image = imagerotate($image, 180, 0);
+                                break;
+                            case 6:
+                                $image = imagerotate($image, -90, 0);
+                                break;
+                            case 8:
+                                $image = imagerotate($image, 90, 0);
+                                break;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore EXIF read errors
+                }
+            }
+
+            $width = imagesx($image);
+            $height = imagesy($image);
+            $maxDimension = 1200;
+
+            // Resize if dimensions exceed maxDimension
+            if ($width > $maxDimension || $height > $maxDimension) {
+                if ($width > $height) {
+                    $newWidth = $maxDimension;
+                    $newHeight = (int) ($height * ($maxDimension / $width));
+                } else {
+                    $newHeight = $maxDimension;
+                    $newWidth = (int) ($width * ($maxDimension / $height));
+                }
+
+                $resizedImage = imagecreatetruecolor($newWidth, $newHeight);
+
+                // Preserve PNG/WebP transparency
+                if (in_array($extension, ['png', 'webp'])) {
+                    imagealphablending($resizedImage, false);
+                    imagesavealpha($resizedImage, true);
+                }
+
+                imagecopyresampled($resizedImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $width, $height);
+                imagedestroy($image);
+                $image = $resizedImage;
+            }
+
+            // Generate unique filename
+            $filename = Str::random(40) . '.jpg';
+            $path = $folder . '/' . $filename;
+            $fullPath = storage_path('app/public/' . $path);
+
+            // Ensure directory exists
+            $dir = dirname($fullPath);
+            if (!file_exists($dir)) {
+                mkdir($dir, 0755, true);
+            }
+
+            // Save as optimized JPEG with 75% quality
+            imagejpeg($image, $fullPath, 75);
+            imagedestroy($image);
+
+            return $path;
+        } catch (\Throwable $e) {
+            // Fallback to standard store if compression fails
+            return $file->store($folder, 'public');
+        }
     }
 
     public function edit($id)
@@ -318,7 +411,7 @@ class LaporanHarianController extends Controller
                 if ($parafPath && Storage::disk('public')->exists($parafPath)) {
                     Storage::disk('public')->delete($parafPath);
                 }
-                $parafPath = $request->file('paraf')->store('paraf_approve', 'public');
+                $parafPath = $this->storeCompressedImage($request->file('paraf'), 'paraf_approve');
             }
 
             $laporan->update([
@@ -390,7 +483,7 @@ class LaporanHarianController extends Controller
         foreach ($buktiLama as $index => $oldPath) {
             if ($request->hasFile("bukti_ganti.$index")) {
                 $newFile = $request->file("bukti_ganti.$index");
-                $newPath = $newFile->store('bukti_laporan', 'public');
+                $newPath = $this->storeCompressedImage($newFile, 'bukti_laporan');
 
                 if (Storage::disk('public')->exists($oldPath)) {
                     Storage::disk('public')->delete($oldPath);
@@ -403,7 +496,7 @@ class LaporanHarianController extends Controller
 
         if ($request->hasFile('bukti')) {
             foreach ($request->file('bukti') as $file) {
-                $buktiFinal[] = $file->store('bukti_laporan', 'public');
+                $buktiFinal[] = $this->storeCompressedImage($file, 'bukti_laporan');
             }
         }
 
