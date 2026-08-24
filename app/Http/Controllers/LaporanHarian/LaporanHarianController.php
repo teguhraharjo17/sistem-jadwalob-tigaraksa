@@ -19,8 +19,8 @@ class LaporanHarianController extends Controller
 {
     public function index(Request $request)
     {
-        $bulan = $request->input('bulan', now()->month);
-        $tahun = $request->input('tahun', now()->year);
+        $bulan = (int) $request->input('bulan', now()->month);
+        $tahun = (int) $request->input('tahun', now()->year);
 
         $pekerjaanList = Checklist::where('bulan', $bulan)
             ->where('tahun', $tahun)
@@ -28,66 +28,34 @@ class LaporanHarianController extends Controller
             ->orderBy('pekerjaan')
             ->get();
 
-        $laporanList = LaporanHarian::with('checklist')
-            ->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun)
-            ->orderBy('tanggal', 'desc')
-            ->orderBy('jam_selesai', 'desc')
-            ->get();
-
         $now = Carbon::createFromDate($tahun, $bulan, 1);
         $areaList = Checklist::select('area')->distinct()->pluck('area');
-        $today = Carbon::today();
-        $tomorrow = Carbon::tomorrow();
+        
+        $todayDate = Carbon::today()->toDateString();
+        $tomorrowDate = Carbon::tomorrow()->toDateString();
 
-        $jadwalHariIniPagi = ChecklistStatus::with(['checklist'])
-            ->whereDate('tanggal', $today)
-            ->where('shift', 'Pagi')
-            ->get()
-            ->map(function ($status) {
+        // 1 Single consolidated query for today's and tomorrow's schedules
+        $statuses = ChecklistStatus::with(['checklist:id,pekerjaan'])
+            ->whereIn('tanggal', [$todayDate, $tomorrowDate])
+            ->get();
+
+        $mapStatus = function ($items) {
+            return $items->map(function ($status) {
                 return [
                     'pekerjaan' => $status->checklist->pekerjaan ?? '(Tidak ditemukan)',
                     'status' => $status->status,
                 ];
-            });
+            })->values()->all();
+        };
 
-        $jadwalHariIniSiang = ChecklistStatus::with(['checklist'])
-            ->whereDate('tanggal', $today)
-            ->where('shift', 'Siang')
-            ->get()
-            ->map(function ($status) {
-                return [
-                    'pekerjaan' => $status->checklist->pekerjaan ?? '(Tidak ditemukan)',
-                    'status' => $status->status,
-                ];
-            });
-
-        $jadwalBesokPagi = ChecklistStatus::with(['checklist'])
-            ->whereDate('tanggal', $tomorrow)
-            ->where('shift', 'Pagi')
-            ->get()
-            ->map(function ($status) {
-                return [
-                    'pekerjaan' => $status->checklist->pekerjaan ?? '(Tidak ditemukan)',
-                    'status' => $status->status,
-                ];
-            });
-
-        $jadwalBesokSiang = ChecklistStatus::with(['checklist'])
-            ->whereDate('tanggal', $tomorrow)
-            ->where('shift', 'Siang')
-            ->get()
-            ->map(function ($status) {
-                return [
-                    'pekerjaan' => $status->checklist->pekerjaan ?? '(Tidak ditemukan)',
-                    'status' => $status->status,
-                ];
-            });
+        $jadwalHariIniPagi  = $mapStatus($statuses->where('tanggal', $todayDate)->where('shift', 'Pagi'));
+        $jadwalHariIniSiang = $mapStatus($statuses->where('tanggal', $todayDate)->where('shift', 'Siang'));
+        $jadwalBesokPagi   = $mapStatus($statuses->where('tanggal', $tomorrowDate)->where('shift', 'Pagi'));
+        $jadwalBesokSiang  = $mapStatus($statuses->where('tanggal', $tomorrowDate)->where('shift', 'Siang'));
 
         return view('pages.laporanharian.index', compact(
             'now',
             'pekerjaanList',
-            'laporanList',
             'areaList',
             'jadwalHariIniPagi',
             'jadwalHariIniSiang',
@@ -98,13 +66,15 @@ class LaporanHarianController extends Controller
 
     public function data(Request $request)
     {
-        $bulan = $request->input('bulan', now()->month);
-        $tahun = $request->input('tahun', now()->year);
+        $bulan = (int) $request->input('bulan', now()->month);
+        $tahun = (int) $request->input('tahun', now()->year);
 
-        $laporan = LaporanHarian::with('checklist')
-            ->whereMonth('tanggal', $bulan)
-            ->whereYear('tanggal', $tahun)
-            ->orderBy('tanggal','desc');
+        $startDate = Carbon::createFromDate($tahun, $bulan, 1)->startOfMonth()->toDateString();
+        $endDate   = Carbon::createFromDate($tahun, $bulan, 1)->endOfMonth()->toDateString();
+
+        $laporan = LaporanHarian::with(['checklist:id,pekerjaan'])
+            ->whereBetween('tanggal', [$startDate, $endDate])
+            ->orderBy('tanggal', 'desc');
 
         return DataTables::of($laporan)
             ->addIndexColumn()

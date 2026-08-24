@@ -1449,6 +1449,7 @@
             $('#tableLaporanHarian').DataTable({
                 processing: true,
                 serverSide: true,
+                deferRender: true,
                 ajax: {
                     url: "{{ route('laporanharian.data') }}",
                     data: function (d) {
