@@ -83,6 +83,24 @@
         </div>
         <!--begin::Heading-->
 
+        <!--begin::Alert Status & Errors-->
+        @if (session('status'))
+            <div class="alert alert-success d-flex align-items-center p-4 mb-6 rounded-3">
+                <i class="bi bi-check-circle-fill text-success fs-3 me-3"></i>
+                <div class="fs-7 fw-semibold text-success">{{ session('status') }}</div>
+            </div>
+        @endif
+
+        @if ($errors->any())
+            <div class="alert alert-danger d-flex align-items-center p-4 mb-6 rounded-3">
+                <i class="bi bi-exclamation-triangle-fill text-danger fs-3 me-3 flex-shrink-0"></i>
+                <div class="fs-7 fw-semibold text-danger">
+                    {{ $errors->first() }}
+                </div>
+            </div>
+        @endif
+        <!--end::Alert Status & Errors-->
+
         <!--begin::Input group Username-->
         <div class="fv-row mb-6 login-input-group position-relative">
             <label class="form-label fs-7 fw-bold text-gray-700 mb-2">Username</label>
@@ -91,6 +109,7 @@
                 <input type="text" 
                        placeholder="Masukkan username Anda" 
                        name="username" 
+                       value="{{ old('username') }}"
                        autocomplete="off" 
                        class="form-control ps-12"/>
             </div>
@@ -140,4 +159,5 @@
     <!--end::Form-->
 
 </x-auth-layout>
+
 

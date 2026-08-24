@@ -13,14 +13,14 @@ var KTSigninGeneral = function () {
                     'username': {
                         validators: {
                             notEmpty: {
-                                message: 'Username is required'
+                                message: 'Username wajib diisi!'
                             }
                         }
                     },
                     'password': {
                         validators: {
                             notEmpty: {
-                                message: 'Password is required'
+                                message: 'Password wajib diisi!'
                             }
                         }
                     }
@@ -29,7 +29,6 @@ var KTSigninGeneral = function () {
                     trigger: new FormValidation.plugins.Trigger(),
                     bootstrap: new FormValidation.plugins.Bootstrap5({
                         rowSelector: '.fv-row'
-                        // Hapus eleInvalidClass & eleValidClass untuk gunakan default Bootstrap highlight
                     })
                 }
             }
@@ -54,19 +53,50 @@ var KTSigninGeneral = function () {
                             }
                         })
                         .catch(function (error) {
-                            let message = "An error occurred while submitting the form.";
+                            let title = "Gagal Masuk";
+                            let message = "Terjadi kesalahan saat mencoba masuk. Silakan coba lagi.";
+                            let icon = "error";
+                            let focusInput = null;
+
                             if (error.response && error.response.status === 422 && error.response.data?.errors) {
                                 const errors = error.response.data.errors;
-                                message = Object.values(errors).flat()[0];
+
+                                if (errors.username) {
+                                    message = errors.username[0];
+                                    focusInput = 'username';
+                                    if (message.includes('terdaftar') || message.includes('tidak terdaftar')) {
+                                        title = "Username Tidak Ditemukan";
+                                        icon = "warning";
+                                    } else if (message.includes('percobaan') || message.includes('detik')) {
+                                        title = "Akses Ditangguhkan";
+                                        icon = "warning";
+                                    }
+                                } else if (errors.password) {
+                                    message = errors.password[0];
+                                    title = "Password Salah";
+                                    icon = "error";
+                                    focusInput = 'password';
+                                } else {
+                                    message = Object.values(errors).flat()[0];
+                                }
                             }
 
                             Swal.fire({
+                                title: title,
                                 text: message,
-                                icon: "error",
-                                confirmButtonText: "Ok, got it!",
+                                icon: icon,
+                                confirmButtonText: "Coba Lagi",
                                 buttonsStyling: false,
                                 customClass: {
-                                    confirmButton: "btn btn-primary"
+                                    confirmButton: "btn btn-primary px-5"
+                                }
+                            }).then(function () {
+                                if (focusInput) {
+                                    const inputElem = form.querySelector(`input[name="${focusInput}"]`);
+                                    if (inputElem) {
+                                        inputElem.focus();
+                                        inputElem.select();
+                                    }
                                 }
                             });
                         })
@@ -76,12 +106,13 @@ var KTSigninGeneral = function () {
                         });
                 } else {
                     Swal.fire({
-                        text: "Please fill in all required fields correctly.",
-                        icon: "error",
-                        confirmButtonText: "Ok, got it!",
+                        title: "Form Belum Lengkap",
+                        text: "Harap isi Username dan Password terlebih dahulu.",
+                        icon: "warning",
+                        confirmButtonText: "Mengerti",
                         buttonsStyling: false,
                         customClass: {
-                            confirmButton: "btn btn-primary"
+                            confirmButton: "btn btn-primary px-5"
                         }
                     });
                 }
@@ -127,3 +158,4 @@ var KTSigninGeneral = function () {
 KTUtil.onDOMContentLoaded(function () {
     KTSigninGeneral.init();
 });
+
