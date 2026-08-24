@@ -114,12 +114,26 @@
                         <!--begin::Tab Content-->
                         <div class="tab-content" id="scheduleTabContent">
                             
-                            <!--begin::Tab Hari Ini-->
+                             <!--begin::Tab Hari Ini-->
                             <div class="tab-pane fade show active" id="content-today" role="tabpanel" aria-labelledby="tab-today">
                                 <div class="d-flex justify-content-between align-items-center mb-3 px-1">
                                     <span class="text-muted fs-7"><i class="bi bi-clock me-1 text-primary"></i> {{ \Carbon\Carbon::today()->translatedFormat('l, d F Y') }}</span>
-                                    <span class="schedule-badge">{{ $totalSelesaiHariIni }}/{{ $totalJadwalHariIni ?: 0 }} selesai</span>
+                                    @if(!empty($isTodayHoliday))
+                                        <span class="schedule-badge bg-light-danger text-danger border border-danger border-opacity-20"><i class="bi bi-calendar-x me-1 text-danger"></i> Hari Libur</span>
+                                    @else
+                                        <span class="schedule-badge">{{ $totalSelesaiHariIni }}/{{ $totalJadwalHariIni ?: 0 }} selesai</span>
+                                    @endif
                                 </div>
+
+                                @if(!empty($isTodayHoliday))
+                                    <div class="alert bg-light-danger border border-danger border-opacity-25 rounded-3 d-flex align-items-center p-3 mb-3">
+                                        <i class="bi bi-calendar-x-fill text-danger fs-2 me-3"></i>
+                                        <div>
+                                            <div class="fw-bold text-danger fs-7">Hari ini adalah Tanggal Merah / Hari Libur</div>
+                                            <div class="text-gray-700 fs-8">{{ $todayHolidayName ?? 'Hari Libur / Akhir Pekan' }} &bull; Tidak ada agenda pekerjaan OB hari ini.</div>
+                                        </div>
+                                    </div>
+                                @endif
 
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -171,8 +185,22 @@
                             <div class="tab-pane fade" id="content-tomorrow" role="tabpanel" aria-labelledby="tab-tomorrow">
                                 <div class="d-flex justify-content-between align-items-center mb-3 px-1">
                                     <span class="text-muted fs-7"><i class="bi bi-calendar-event me-1 text-primary"></i> {{ \Carbon\Carbon::tomorrow()->translatedFormat('l, d F Y') }}</span>
-                                    <span class="schedule-badge bg-light-primary text-primary border border-primary border-opacity-20"><i class="bi bi-stars me-1 text-primary"></i> {{ $totalJadwalBesok }} tugas dipersiapkan</span>
+                                    @if(!empty($isTomorrowHoliday))
+                                        <span class="schedule-badge bg-light-danger text-danger border border-danger border-opacity-20"><i class="bi bi-calendar-x me-1 text-danger"></i> Tanggal Merah (Libur)</span>
+                                    @else
+                                        <span class="schedule-badge bg-light-primary text-primary border border-primary border-opacity-20"><i class="bi bi-stars me-1 text-primary"></i> {{ $totalJadwalBesok }} tugas dipersiapkan</span>
+                                    @endif
                                 </div>
+
+                                @if(!empty($isTomorrowHoliday))
+                                    <div class="alert bg-light-danger border border-danger border-opacity-25 rounded-3 d-flex align-items-center p-3 mb-3">
+                                        <i class="bi bi-calendar-x-fill text-danger fs-2 me-3"></i>
+                                        <div>
+                                            <div class="fw-bold text-danger fs-7">Besok adalah Tanggal Merah / Hari Libur</div>
+                                            <div class="text-gray-700 fs-8">{{ $tomorrowHolidayName ?? 'Hari Libur / Akhir Pekan' }} &bull; Tidak ada agenda pekerjaan OB yang dipersiapkan untuk besok.</div>
+                                        </div>
+                                    </div>
+                                @endif
 
                                 <div class="row g-3">
                                     <div class="col-md-6">

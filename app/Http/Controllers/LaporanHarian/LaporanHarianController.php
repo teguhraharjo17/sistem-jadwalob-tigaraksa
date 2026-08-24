@@ -15,8 +15,17 @@ use App\Exports\LaporanHarianExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Yajra\DataTables\Facades\DataTables;
 
+use App\Services\MileniaApiService;
+
 class LaporanHarianController extends Controller
 {
+    protected $mileniaApi;
+
+    public function __construct(MileniaApiService $mileniaApi)
+    {
+        $this->mileniaApi = $mileniaApi;
+    }
+
     public function index(Request $request)
     {
         $bulan = (int) $request->input('bulan', now()->month);
@@ -34,10 +43,44 @@ class LaporanHarianController extends Controller
         $todayDate = Carbon::today()->toDateString();
         $tomorrowDate = Carbon::tomorrow()->toDateString();
 
+        // Ambil daftar hari libur dari Milenia API
+        $holidayData = $this->mileniaApi->getHolidays();
+        $holidayDates = collect($holidayData)
+            ->pluck('tanggal')
+            ->map(fn($t) => Carbon::parse($t)->format('Y-m-d'))
+            ->toArray();
+
+        $holidayMap = collect($holidayData)
+            ->pluck('keterangan', 'tanggal')
+            ->toArray();
+
+        // Bersihkan status terdaftar pada hari libur / weekend jika statusnya belum selesai (status 0)
+        if (!empty($holidayDates)) {
+            ChecklistStatus::whereIn('tanggal', $holidayDates)
+                ->where('status', 0)
+                ->delete();
+        }
+
         // 1 Single consolidated query for today's and tomorrow's schedules
         $statuses = ChecklistStatus::with(['checklist:id,pekerjaan'])
             ->whereIn('tanggal', [$todayDate, $tomorrowDate])
             ->get();
+
+        $todayCarbon = Carbon::today();
+        $tomorrowCarbon = Carbon::tomorrow();
+
+        $isTodayHoliday = $todayCarbon->isWeekend() || in_array($todayDate, $holidayDates);
+        $isTomorrowHoliday = $tomorrowCarbon->isWeekend() || in_array($tomorrowDate, $holidayDates);
+
+        $todayHolidayName = null;
+        if ($isTodayHoliday) {
+            $todayHolidayName = $holidayMap[$todayDate] ?? ('Akhir Pekan (' . $todayCarbon->translatedFormat('l') . ')');
+        }
+
+        $tomorrowHolidayName = null;
+        if ($isTomorrowHoliday) {
+            $tomorrowHolidayName = $holidayMap[$tomorrowDate] ?? ('Akhir Pekan (' . $tomorrowCarbon->translatedFormat('l') . ')');
+        }
 
         $mapStatus = function ($items) {
             return $items->map(function ($status) {
@@ -48,10 +91,10 @@ class LaporanHarianController extends Controller
             })->values()->all();
         };
 
-        $jadwalHariIniPagi  = $mapStatus($statuses->where('tanggal', $todayDate)->where('shift', 'Pagi'));
-        $jadwalHariIniSiang = $mapStatus($statuses->where('tanggal', $todayDate)->where('shift', 'Siang'));
-        $jadwalBesokPagi   = $mapStatus($statuses->where('tanggal', $tomorrowDate)->where('shift', 'Pagi'));
-        $jadwalBesokSiang  = $mapStatus($statuses->where('tanggal', $tomorrowDate)->where('shift', 'Siang'));
+        $jadwalHariIniPagi  = $isTodayHoliday ? [] : $mapStatus($statuses->where('tanggal', $todayDate)->where('shift', 'Pagi'));
+        $jadwalHariIniSiang = $isTodayHoliday ? [] : $mapStatus($statuses->where('tanggal', $todayDate)->where('shift', 'Siang'));
+        $jadwalBesokPagi   = $isTomorrowHoliday ? [] : $mapStatus($statuses->where('tanggal', $tomorrowDate)->where('shift', 'Pagi'));
+        $jadwalBesokSiang  = $isTomorrowHoliday ? [] : $mapStatus($statuses->where('tanggal', $tomorrowDate)->where('shift', 'Siang'));
 
         return view('pages.laporanharian.index', compact(
             'now',
@@ -60,7 +103,11 @@ class LaporanHarianController extends Controller
             'jadwalHariIniPagi',
             'jadwalHariIniSiang',
             'jadwalBesokPagi',
-            'jadwalBesokSiang'
+            'jadwalBesokSiang',
+            'isTodayHoliday',
+            'isTomorrowHoliday',
+            'todayHolidayName',
+            'tomorrowHolidayName'
         ));
     }
 
