@@ -341,19 +341,77 @@
                                 </div>
                             </div>
 
-                            <fieldset class="border p-3 mb-3">
-                                <legend class="w-auto px-2">Jam Kerja</legend>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="jam_mulai" class="form-label">Mulai</label>
-                                        <input type="time" class="form-control" id="jam_mulai" name="jam_mulai" required>
+                            <!-- Jam Kerja 24 Jam Indonesia (WIB) -->
+                            <div class="time-picker-card p-3 rounded-3 mb-3 border bg-light-primary" id="add_time_picker_container">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <label class="form-label fw-bold text-gray-800 mb-0 fs-7 d-flex align-items-center">
+                                        <i class="bi bi-clock-history text-primary me-2 fs-5"></i>Jam Kerja <span class="text-muted fw-normal ms-1 fs-8">(24 Jam WIB)</span>
+                                    </label>
+                                    <span class="badge bg-primary text-white fs-8 px-2 py-1" id="add_time_duration_badge">
+                                        Durasi: 1 jam
+                                    </span>
+                                </div>
+
+                                <div class="d-flex align-items-center text-muted fs-8 mb-2">
+                                    <i class="bi bi-info-circle text-primary me-1"></i>
+                                    <span>Format waktu 24 jam: <strong>00:00</strong> s.d. <strong>23:59</strong></span>
+                                </div>
+
+                                <div class="row g-2">
+                                    <!-- Jam Mulai -->
+                                    <div class="col-6">
+                                        <div class="time-stepper-group">
+                                            <label class="time-stepper-label"><i class="bi bi-play-circle text-success me-1"></i>Mulai</label>
+                                            <div class="time-stepper-row">
+                                                <div class="time-stepper-unit">
+                                                    <button type="button" class="ts-btn ts-up" onclick="stepTime('add','mulai','hour',1)"><i class="bi bi-chevron-up"></i></button>
+                                                    <input type="text" inputmode="numeric" maxlength="2" class="ts-input" id="add_jam_mulai_hour" value="07" onfocus="this.select()" onblur="clampTimeInput(this,'hour','add')" onkeydown="handleStepKey(event,'add','mulai','hour')">
+                                                    <button type="button" class="ts-btn ts-down" onclick="stepTime('add','mulai','hour',-1)"><i class="bi bi-chevron-down"></i></button>
+                                                    <span class="ts-unit-label">Jam</span>
+                                                </div>
+                                                <span class="ts-colon">:</span>
+                                                <div class="time-stepper-unit">
+                                                    <button type="button" class="ts-btn ts-up" onclick="stepTime('add','mulai','min',5)"><i class="bi bi-chevron-up"></i></button>
+                                                    <input type="text" inputmode="numeric" maxlength="2" class="ts-input" id="add_jam_mulai_minute" value="00" onfocus="this.select()" onblur="clampTimeInput(this,'min','add')" onkeydown="handleStepKey(event,'add','mulai','min')">
+                                                    <button type="button" class="ts-btn ts-down" onclick="stepTime('add','mulai','min',-5)"><i class="bi bi-chevron-down"></i></button>
+                                                    <span class="ts-unit-label">Menit</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="jam_selesai" class="form-label">Selesai</label>
-                                        <input type="time" class="form-control" id="jam_selesai" name="jam_selesai" required>
+                                    <!-- Jam Selesai -->
+                                    <div class="col-6">
+                                        <div class="time-stepper-group">
+                                            <label class="time-stepper-label"><i class="bi bi-stop-circle text-danger me-1"></i>Selesai</label>
+                                            <div class="time-stepper-row">
+                                                <div class="time-stepper-unit">
+                                                    <button type="button" class="ts-btn ts-up" onclick="stepTime('add','selesai','hour',1)"><i class="bi bi-chevron-up"></i></button>
+                                                    <input type="text" inputmode="numeric" maxlength="2" class="ts-input" id="add_jam_selesai_hour" value="08" onfocus="this.select()" onblur="clampTimeInput(this,'hour','add')" onkeydown="handleStepKey(event,'add','selesai','hour')">
+                                                    <button type="button" class="ts-btn ts-down" onclick="stepTime('add','selesai','hour',-1)"><i class="bi bi-chevron-down"></i></button>
+                                                    <span class="ts-unit-label">Jam</span>
+                                                </div>
+                                                <span class="ts-colon">:</span>
+                                                <div class="time-stepper-unit">
+                                                    <button type="button" class="ts-btn ts-up" onclick="stepTime('add','selesai','min',5)"><i class="bi bi-chevron-up"></i></button>
+                                                    <input type="text" inputmode="numeric" maxlength="2" class="ts-input" id="add_jam_selesai_minute" value="00" onfocus="this.select()" onblur="clampTimeInput(this,'min','add')" onkeydown="handleStepKey(event,'add','selesai','min')">
+                                                    <button type="button" class="ts-btn ts-down" onclick="stepTime('add','selesai','min',-5)"><i class="bi bi-chevron-down"></i></button>
+                                                    <span class="ts-unit-label">Menit</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </fieldset>
+
+                                <!-- Hidden Inputs untuk backend -->
+                                <input type="hidden" id="jam_mulai" name="jam_mulai" value="07:00" required>
+                                <input type="hidden" id="jam_selesai" name="jam_selesai" value="08:00" required>
+
+                                <!-- Visual feedback -->
+                                <div id="add_time_feedback" class="mt-2 text-muted fs-8 d-flex align-items-center">
+                                    <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                                    <span id="add_time_feedback_text">Waktu kerja: 07:00 s.d. 08:00 WIB</span>
+                                </div>
+                            </div>
 
                             <div class="mb-3">
                                 <label for="item_pekerjaan" class="form-label">Item Pekerjaan</label>
@@ -444,19 +502,77 @@
                                 </div>
                             </div>
 
-                            <fieldset class="border p-3 mb-3">
-                                <legend class="w-auto px-2">Jam Kerja</legend>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label for="edit_jam_mulai" class="form-label">Mulai</label>
-                                        <input type="time" class="form-control" id="edit_jam_mulai" name="jam_mulai" required>
+                            <!-- Jam Kerja 24 Jam Indonesia (WIB) Edit -->
+                            <div class="time-picker-card p-3 rounded-3 mb-3 border bg-light-primary" id="edit_time_picker_container">
+                                <div class="d-flex align-items-center justify-content-between mb-2">
+                                    <label class="form-label fw-bold text-gray-800 mb-0 fs-7 d-flex align-items-center">
+                                        <i class="bi bi-clock-history text-primary me-2 fs-5"></i>Jam Kerja <span class="text-muted fw-normal ms-1 fs-8">(24 Jam WIB)</span>
+                                    </label>
+                                    <span class="badge bg-primary text-white fs-8 px-2 py-1" id="edit_time_duration_badge">
+                                        Durasi: 1 jam
+                                    </span>
+                                </div>
+
+                                <div class="d-flex align-items-center text-muted fs-8 mb-2">
+                                    <i class="bi bi-info-circle text-primary me-1"></i>
+                                    <span>Format waktu 24 jam: <strong>00:00</strong> s.d. <strong>23:59</strong></span>
+                                </div>
+
+                                <div class="row g-2">
+                                    <!-- Jam Mulai -->
+                                    <div class="col-6">
+                                        <div class="time-stepper-group">
+                                            <label class="time-stepper-label"><i class="bi bi-play-circle text-success me-1"></i>Mulai</label>
+                                            <div class="time-stepper-row">
+                                                <div class="time-stepper-unit">
+                                                    <button type="button" class="ts-btn ts-up" onclick="stepTime('edit','mulai','hour',1)"><i class="bi bi-chevron-up"></i></button>
+                                                    <input type="text" inputmode="numeric" maxlength="2" class="ts-input" id="edit_jam_mulai_hour" value="07" onfocus="this.select()" onblur="clampTimeInput(this,'hour','edit')" onkeydown="handleStepKey(event,'edit','mulai','hour')">
+                                                    <button type="button" class="ts-btn ts-down" onclick="stepTime('edit','mulai','hour',-1)"><i class="bi bi-chevron-down"></i></button>
+                                                    <span class="ts-unit-label">Jam</span>
+                                                </div>
+                                                <span class="ts-colon">:</span>
+                                                <div class="time-stepper-unit">
+                                                    <button type="button" class="ts-btn ts-up" onclick="stepTime('edit','mulai','min',5)"><i class="bi bi-chevron-up"></i></button>
+                                                    <input type="text" inputmode="numeric" maxlength="2" class="ts-input" id="edit_jam_mulai_minute" value="00" onfocus="this.select()" onblur="clampTimeInput(this,'min','edit')" onkeydown="handleStepKey(event,'edit','mulai','min')">
+                                                    <button type="button" class="ts-btn ts-down" onclick="stepTime('edit','mulai','min',-5)"><i class="bi bi-chevron-down"></i></button>
+                                                    <span class="ts-unit-label">Menit</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label for="edit_jam_selesai" class="form-label">Selesai</label>
-                                        <input type="time" class="form-control" id="edit_jam_selesai" name="jam_selesai" required>
+                                    <!-- Jam Selesai -->
+                                    <div class="col-6">
+                                        <div class="time-stepper-group">
+                                            <label class="time-stepper-label"><i class="bi bi-stop-circle text-danger me-1"></i>Selesai</label>
+                                            <div class="time-stepper-row">
+                                                <div class="time-stepper-unit">
+                                                    <button type="button" class="ts-btn ts-up" onclick="stepTime('edit','selesai','hour',1)"><i class="bi bi-chevron-up"></i></button>
+                                                    <input type="text" inputmode="numeric" maxlength="2" class="ts-input" id="edit_jam_selesai_hour" value="08" onfocus="this.select()" onblur="clampTimeInput(this,'hour','edit')" onkeydown="handleStepKey(event,'edit','selesai','hour')">
+                                                    <button type="button" class="ts-btn ts-down" onclick="stepTime('edit','selesai','hour',-1)"><i class="bi bi-chevron-down"></i></button>
+                                                    <span class="ts-unit-label">Jam</span>
+                                                </div>
+                                                <span class="ts-colon">:</span>
+                                                <div class="time-stepper-unit">
+                                                    <button type="button" class="ts-btn ts-up" onclick="stepTime('edit','selesai','min',5)"><i class="bi bi-chevron-up"></i></button>
+                                                    <input type="text" inputmode="numeric" maxlength="2" class="ts-input" id="edit_jam_selesai_minute" value="00" onfocus="this.select()" onblur="clampTimeInput(this,'min','edit')" onkeydown="handleStepKey(event,'edit','selesai','min')">
+                                                    <button type="button" class="ts-btn ts-down" onclick="stepTime('edit','selesai','min',-5)"><i class="bi bi-chevron-down"></i></button>
+                                                    <span class="ts-unit-label">Menit</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </fieldset>
+
+                                <!-- Hidden Inputs untuk backend -->
+                                <input type="hidden" id="edit_jam_mulai" name="jam_mulai" value="07:00" required>
+                                <input type="hidden" id="edit_jam_selesai" name="jam_selesai" value="08:00" required>
+
+                                <!-- Visual feedback -->
+                                <div id="edit_time_feedback" class="mt-2 text-muted fs-8 d-flex align-items-center">
+                                    <i class="bi bi-info-circle-fill text-primary me-1"></i>
+                                    <span id="edit_time_feedback_text">Waktu kerja: 07:00 s.d. 08:00 WIB</span>
+                                </div>
+                            </div>
 
                             <div class="mb-3">
                                 <label for="edit_item_pekerjaan" class="form-label">Item Pekerjaan</label>
@@ -1349,6 +1465,248 @@
             padding: 8px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
+
+        /* 24-Hour Time Stepper Component Styles */
+        .time-picker-card {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            transition: all 0.25s ease-in-out;
+        }
+        .time-picker-card.is-invalid-time {
+            background-color: #fef2f2 !important;
+            border-color: #fca5a5 !important;
+        }
+        .time-presets-wrapper {
+            background-color: #ffffff;
+        }
+
+        /* Stepper Group */
+        .time-stepper-group {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 8px 8px;
+            text-align: center;
+        }
+        .time-stepper-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #64748b;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .time-stepper-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+        }
+        .time-stepper-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            flex: 1;
+            min-width: 0;
+            max-width: 56px;
+        }
+
+        /* Stepper Buttons — base (desktop / tablet) */
+        .ts-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 48px;
+            height: 32px;
+            border: 1px solid #e2e8f0;
+            background: #f1f5f9;
+            border-radius: 6px;
+            color: #475569;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.15s ease;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .ts-btn:hover {
+            background: #e0e7ff;
+            border-color: #818cf8;
+            color: #4338ca;
+        }
+        .ts-btn:active {
+            background: #c7d2fe;
+            transform: scale(0.92);
+        }
+
+        /* Stepper Input — base */
+        .ts-input {
+            width: 100%;
+            max-width: 48px;
+            height: 42px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #1e293b;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            background: #ffffff;
+            outline: none;
+            padding: 0;
+            -moz-appearance: textfield;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .ts-input::-webkit-outer-spin-button,
+        .ts-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        .ts-input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18);
+        }
+
+        /* Colon separator */
+        .ts-colon {
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: #94a3b8;
+            padding: 0 2px;
+            line-height: 1;
+            margin-top: -14px;
+            flex-shrink: 0;
+        }
+
+        /* Unit label */
+        .ts-unit-label {
+            font-size: 0.6rem;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-top: -1px;
+        }
+
+        .btn-quick-time {
+            font-size: 0.725rem;
+            padding: 3px 8px;
+            font-weight: 500;
+        }
+
+        /* ==========================================
+           RESPONSIVE BREAKPOINTS — all device sizes
+           ========================================== */
+
+        /* HP besar / phablet (max 480px) */
+        @media (max-width: 480px) {
+            .time-stepper-group {
+                padding: 8px 6px 6px;
+            }
+            .ts-input {
+                max-width: 46px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+            .ts-btn {
+                max-width: 44px;
+                height: 30px;
+            }
+        }
+
+        /* HP biasa / standar (max 420px) */
+        @media (max-width: 420px) {
+            .time-stepper-group {
+                padding: 7px 5px 5px;
+                border-radius: 8px;
+            }
+            .ts-input {
+                max-width: 42px;
+                height: 38px;
+                font-size: 1.15rem;
+            }
+            .ts-btn {
+                max-width: 40px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
+            .ts-colon {
+                font-size: 1.3rem;
+                padding: 0 1px;
+            }
+            .time-stepper-row {
+                gap: 3px;
+            }
+        }
+
+        /* HP kecil — iPhone SE, Galaxy S series kecil (max 375px) */
+        @media (max-width: 375px) {
+            .time-picker-card {
+                padding: 10px 8px !important;
+            }
+            .time-stepper-group {
+                padding: 6px 4px 4px;
+            }
+            .ts-input {
+                max-width: 38px;
+                height: 36px;
+                font-size: 1.05rem;
+                border-width: 1.5px;
+                border-radius: 6px;
+            }
+            .ts-btn {
+                max-width: 36px;
+                height: 26px;
+                font-size: 0.7rem;
+                border-radius: 5px;
+            }
+            .ts-colon {
+                font-size: 1.15rem;
+                padding: 0;
+            }
+            .ts-unit-label {
+                font-size: 0.5rem;
+            }
+            .time-stepper-label {
+                font-size: 0.65rem;
+                margin-bottom: 3px;
+            }
+            .time-stepper-row {
+                gap: 2px;
+            }
+        }
+
+        /* HP sangat kecil — layar 320px (iPhone 5/SE lama) */
+        @media (max-width: 320px) {
+            .time-picker-card {
+                padding: 8px 6px !important;
+            }
+            .time-stepper-group {
+                padding: 5px 3px 3px;
+            }
+            .ts-input {
+                max-width: 34px;
+                height: 32px;
+                font-size: 0.95rem;
+            }
+            .ts-btn {
+                max-width: 32px;
+                height: 24px;
+                font-size: 0.65rem;
+            }
+            .ts-colon {
+                font-size: 1rem;
+            }
+            .time-stepper-label {
+                font-size: 0.6rem;
+            }
+            .ts-unit-label {
+                font-size: 0.45rem;
+            }
+        }
     </style>
 
     <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
@@ -1461,7 +1819,194 @@
             });
         }
 
+        // ==========================================
+        // 24-HOUR INDONESIAN TIME PICKER HELPERS
+        // ==========================================
+        function renderShiftPresets(prefix, shift) {
+            const container = $(`#${prefix}_shift_presets`);
+            if (!container.length) return;
+
+            let html = '';
+            if (shift === 'Siang') {
+                html = `
+                    <button type="button" class="btn btn-xs btn-outline-info rounded-pill" onclick="setQuickTime('${prefix}', '13', '00', '14', '00')">13:00 - 14:00</button>
+                    <button type="button" class="btn btn-xs btn-outline-info rounded-pill" onclick="setQuickTime('${prefix}', '14', '00', '15', '00')">14:00 - 15:00</button>
+                    <button type="button" class="btn btn-xs btn-outline-info rounded-pill" onclick="setQuickTime('${prefix}', '14', '00', '22', '00')">14:00 - 22:00 (Full)</button>
+                `;
+            } else {
+                // Default / Pagi
+                html = `
+                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill" onclick="setQuickTime('${prefix}', '07', '00', '08', '00')">07:00 - 08:00</button>
+                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill" onclick="setQuickTime('${prefix}', '08', '00', '09', '00')">08:00 - 09:00</button>
+                    <button type="button" class="btn btn-xs btn-outline-primary rounded-pill" onclick="setQuickTime('${prefix}', '07', '00', '15', '00')">07:00 - 15:00 (Full)</button>
+                `;
+            }
+            container.html(html);
+        }
+
+        // Helper: pad value to 2 digits
+        function pad2(v) {
+            return String(v).padStart(2, '0');
+        }
+
+        // Step hour or minute via ▲▼ buttons
+        function stepTime(prefix, field, type, delta) {
+            const el = document.getElementById(`${prefix}_jam_${field}_${type === 'hour' ? 'hour' : 'minute'}`);
+            if (!el) return;
+            let val = parseInt(el.value, 10) || 0;
+            if (type === 'hour') {
+                val = ((val + delta) % 24 + 24) % 24;
+            } else {
+                val = ((val + delta) % 60 + 60) % 60;
+            }
+            el.value = pad2(val);
+            syncTimePicker(prefix);
+        }
+
+        // Clamp and format input after manual typing (onblur)
+        function clampTimeInput(el, type, prefix) {
+            let val = parseInt(el.value, 10);
+            if (isNaN(val) || val < 0) val = 0;
+            if (type === 'hour' && val > 23) val = 23;
+            if (type === 'min' && val > 59) val = 59;
+            el.value = pad2(val);
+            syncTimePicker(prefix);
+        }
+
+        // Keyboard support: Arrow Up/Down on input
+        function handleStepKey(event, prefix, field, type) {
+            if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                stepTime(prefix, field, type, type === 'hour' ? 1 : 5);
+            } else if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                stepTime(prefix, field, type, type === 'hour' ? -1 : -5);
+            } else if (event.key === 'Enter') {
+                event.preventDefault();
+                event.target.blur();
+            }
+        }
+
+        function syncTimePicker(prefix) {
+            const startHour = $(`#${prefix}_jam_mulai_hour`).val() || '07';
+            const startMin = $(`#${prefix}_jam_mulai_minute`).val() || '00';
+            const endHour = $(`#${prefix}_jam_selesai_hour`).val() || '08';
+            const endMin = $(`#${prefix}_jam_selesai_minute`).val() || '00';
+
+            const startTime = `${pad2(startHour)}:${pad2(startMin)}`;
+            const endTime = `${pad2(endHour)}:${pad2(endMin)}`;
+
+            // Sync hidden inputs for form submit
+            if (prefix === 'add') {
+                $('#jam_mulai').val(startTime);
+                $('#jam_selesai').val(endTime);
+            } else {
+                $('#edit_jam_mulai').val(startTime);
+                $('#edit_jam_selesai').val(endTime);
+            }
+
+            // Calculate duration & validation
+            const startTotal = parseInt(startHour, 10) * 60 + parseInt(startMin, 10);
+            const endTotal = parseInt(endHour, 10) * 60 + parseInt(endMin, 10);
+            const diff = endTotal - startTotal;
+
+            const card = $(`#${prefix}_time_picker_container`);
+            const badge = $(`#${prefix}_time_duration_badge`);
+            const feedback = $(`#${prefix}_time_feedback`);
+            const feedbackText = $(`#${prefix}_time_feedback_text`);
+
+            if (diff < 0) {
+                card.addClass('is-invalid-time').removeClass('bg-light-primary').addClass('bg-light-danger');
+                badge.removeClass('bg-primary').addClass('bg-danger').text('Waktu Tidak Valid');
+                feedback.removeClass('text-muted').addClass('text-danger');
+                feedbackText.html(`<strong>Perhatian:</strong> Jam selesai (${endTime}) tidak boleh lebih awal dari jam mulai (${startTime})`);
+            } else if (diff === 0) {
+                card.removeClass('is-invalid-time bg-light-danger').addClass('bg-light-primary');
+                badge.removeClass('bg-danger').addClass('bg-warning text-dark').text('Durasi: 0 menit');
+                feedback.removeClass('text-danger').addClass('text-muted');
+                feedbackText.text(`Waktu kerja: ${startTime} s.d ${endTime} WIB (Durasi sama / 0 menit)`);
+            } else {
+                const diffHours = Math.floor(diff / 60);
+                const diffMins = diff % 60;
+                let durText = '';
+                if (diffHours > 0 && diffMins > 0) {
+                    durText = `${diffHours} jam ${diffMins} mnt`;
+                } else if (diffHours > 0) {
+                    durText = `${diffHours} jam`;
+                } else {
+                    durText = `${diffMins} mnt`;
+                }
+
+                card.removeClass('is-invalid-time bg-light-danger').addClass('bg-light-primary');
+                badge.removeClass('bg-danger bg-warning text-dark').addClass('bg-primary text-white').text(`Durasi: ${durText}`);
+                feedback.removeClass('text-danger').addClass('text-muted');
+                feedbackText.text(`Waktu kerja: ${startTime} s.d ${endTime} WIB (Durasi: ${durText})`);
+            }
+        }
+
+        function setTimePickerValues(prefix, jamMulai, jamSelesai) {
+            if (!jamMulai) jamMulai = '07:00';
+            if (!jamSelesai) jamSelesai = '08:00';
+
+            const startParts = jamMulai.split(':');
+            const endParts = jamSelesai.split(':');
+
+            $(`#${prefix}_jam_mulai_hour`).val(pad2(startParts[0] || '07'));
+            $(`#${prefix}_jam_mulai_minute`).val(pad2(startParts[1] || '00'));
+            $(`#${prefix}_jam_selesai_hour`).val(pad2(endParts[0] || '08'));
+            $(`#${prefix}_jam_selesai_minute`).val(pad2(endParts[1] || '00'));
+
+            syncTimePicker(prefix);
+        }
+
+        function setQuickTime(prefix, startH, startM, endH, endM) {
+            $(`#${prefix}_jam_mulai_hour`).val(startH);
+            $(`#${prefix}_jam_mulai_minute`).val(startM);
+            $(`#${prefix}_jam_selesai_hour`).val(endH);
+            $(`#${prefix}_jam_selesai_minute`).val(endM);
+
+            syncTimePicker(prefix);
+        }
+
+        function setQuickNow(prefix) {
+            const now = new Date();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+
+            // Bulatkan ke kelipatan 5 terdekat
+            const roundedMinute = Math.round(currentMinute / 5) * 5;
+            let startH = currentHour;
+            let startM = roundedMinute;
+            if (startM >= 60) {
+                startH = (startH + 1) % 24;
+                startM = 0;
+            }
+
+            let endH = (startH + 1) % 24;
+            let endM = startM;
+
+            setQuickTime(prefix, pad2(startH), pad2(startM), pad2(endH), pad2(endM));
+        }
+
+        function addDurationMinutes(prefix, minutesToAdd) {
+            const startH = parseInt($(`#${prefix}_jam_mulai_hour`).val() || '0', 10);
+            const startM = parseInt($(`#${prefix}_jam_mulai_minute`).val() || '0', 10);
+
+            let totalMinutes = (startH * 60 + startM + minutesToAdd) % (24 * 60);
+            let endH = Math.floor(totalMinutes / 60);
+            let endM = totalMinutes % 60;
+
+            $(`#${prefix}_jam_selesai_hour`).val(pad2(endH));
+            $(`#${prefix}_jam_selesai_minute`).val(pad2(endM));
+
+            syncTimePicker(prefix);
+        }
+
         $(document).ready(function () {
+            // Inisialisasi Time Picker default
+            renderShiftPresets('add', $('#formTambahLaporanHarian input[name="shift"]:checked').val() || 'Pagi');
+            syncTimePicker('add');
+
             // Prevent accessibility warning when hiding modal while descendant retains focus
             $(document).on('hide.bs.modal', '.modal', function () {
                 if (document.activeElement && this.contains(document.activeElement)) {
@@ -1472,14 +2017,25 @@
             // Register event listeners for Add Modal
             $('#tanggal').on('change', function () {
                 const tanggal = $(this).val();
-                const shift = $('input[name="shift"]:checked').val();
+                const shift = $('#formTambahLaporanHarian input[name="shift"]:checked').val();
                 loadPekerjaanList(tanggal, shift);
             });
 
-            $('input[name="shift"]').on('change', function () {
+            $('#formTambahLaporanHarian input[name="shift"]').on('change', function () {
                 const shift = $(this).val();
                 const tanggal = $('#tanggal').val();
                 loadPekerjaanList(tanggal, shift);
+                renderShiftPresets('add', shift);
+                if (shift === 'Siang') {
+                    setTimePickerValues('add', '14:00', '15:00');
+                } else {
+                    setTimePickerValues('add', '07:00', '08:00');
+                }
+            });
+
+            $('#formEditLaporan input[name="shift"]').on('change', function () {
+                const shift = $(this).val();
+                renderShiftPresets('edit', shift);
             });
 
             $('#area').on('change', function () {
@@ -1516,6 +2072,13 @@
                     hint.textContent = 'Pilih tanggal dan shift untuk memuat item pekerjaan yang tersedia.';
                     hint.classList.remove('text-danger');
                 }
+                const currentShift = $('#formTambahLaporanHarian input[name="shift"]:checked').val() || 'Pagi';
+                renderShiftPresets('add', currentShift);
+                if (currentShift === 'Siang') {
+                    setTimePickerValues('add', '14:00', '15:00');
+                } else {
+                    setTimePickerValues('add', '07:00', '08:00');
+                }
             });
             // formTambahLaporanHarian AJAX Submit
             $('#formTambahLaporanHarian').on('submit', function (e) {
@@ -1538,6 +2101,8 @@
                         // Reset Select2 fields inside the form
                         $('#item_pekerjaan').val(null).trigger('change');
                         $('#area').val(null).trigger('change');
+                        setTimePickerValues('add', '07:00', '08:00');
+                        renderShiftPresets('add', 'Pagi');
                         
                         Swal.fire({
                             icon: 'success',
@@ -1779,8 +2344,8 @@
                     $('#formEditLaporan').attr('action', updateUrl);
                     $('#edit_tanggal').val(laporan.tanggal);
                     $(`#edit_shift${laporan.shift}`).prop('checked', true);
-                    $('#edit_jam_mulai').val(laporan.jam_mulai);
-                    $('#edit_jam_selesai').val(laporan.jam_selesai);
+                    setTimePickerValues('edit', laporan.jam_mulai, laporan.jam_selesai);
+                    renderShiftPresets('edit', laporan.shift);
                     
                     editModalJobs = data.pekerjaanList;
 
@@ -1845,6 +2410,7 @@
                     $('input[name="edit_shift"]').removeAttr('disabled');
                     $('#edit_jam_mulai').removeAttr('readonly');
                     $('#edit_jam_selesai').removeAttr('readonly');
+                    $('#edit_jam_mulai_hour, #edit_jam_mulai_minute, #edit_jam_selesai_hour, #edit_jam_selesai_minute').removeAttr('disabled');
                     $('#edit_item_pekerjaan').removeAttr('disabled');
                     $('#edit_area').removeAttr('disabled');
                     $('#btnTambahBuktiRow').show();

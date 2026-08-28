@@ -121,7 +121,10 @@ class LaporanHarianController extends Controller
 
         $laporan = LaporanHarian::with(['checklist:id,pekerjaan'])
             ->whereBetween('tanggal', [$startDate, $endDate])
-            ->orderBy('tanggal', 'desc');
+            ->orderBy('tanggal', 'desc')
+            ->orderBy('jam_mulai', 'desc')
+            ->orderBy('jam_selesai', 'desc')
+            ->orderBy('id', 'desc');
 
         return DataTables::of($laporan)
             ->addIndexColumn()
