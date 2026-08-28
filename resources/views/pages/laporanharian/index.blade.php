@@ -561,15 +561,15 @@
                                 <div id="preview_paraf_approve" class="mb-2"></div>
 
                                 <!-- Signature Mode Tabs -->
-                                <ul class="nav nav-tabs nav-line-tabs mb-3 fs-6" id="signatureTabs" role="tablist">
+                                <ul class="nav nav-pills nav-fill mb-3 p-1 bg-light rounded-3" id="signatureTabs" role="tablist">
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link active fw-bold py-2 px-3" id="canvas-tab" data-bs-toggle="tab" data-bs-target="#canvas-panel" type="button" role="tab" aria-controls="canvas-panel" aria-selected="true">
-                                            <i class="fas fa-signature me-1"></i> Tulis Langsung
+                                        <button class="nav-link active fw-bold py-2 fs-7" id="canvas-tab" data-bs-toggle="pill" data-bs-target="#canvas-panel" type="button" role="tab" aria-controls="canvas-panel" aria-selected="true">
+                                            <i class="fas fa-pen-nib me-1"></i> Tulis Langsung
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">
-                                        <button class="nav-link fw-bold py-2 px-3" id="upload-tab" data-bs-toggle="tab" data-bs-target="#upload-panel" type="button" role="tab" aria-controls="upload-panel" aria-selected="false">
-                                            <i class="fas fa-upload me-1"></i> Unggah Gambar
+                                        <button class="nav-link fw-bold py-2 fs-7" id="upload-tab" data-bs-toggle="pill" data-bs-target="#upload-panel" type="button" role="tab" aria-controls="upload-panel" aria-selected="false">
+                                            <i class="fas fa-cloud-upload-alt me-1"></i> Unggah Gambar
                                         </button>
                                     </li>
                                 </ul>
@@ -577,19 +577,21 @@
                                 <div class="tab-content" id="signatureTabsContent">
                                     <!-- Canvas Panel -->
                                     <div class="tab-pane fade show active" id="canvas-panel" role="tabpanel" aria-labelledby="canvas-tab">
-                                        <div class="border rounded bg-white p-2">
-                                            <canvas id="approveSignatureCanvas" class="border rounded" style="width: 100%; height: 180px; touch-action: none; background-color: #fafafa;"></canvas>
+                                        <div class="border rounded-3 bg-white p-2 signature-pad-container shadow-xs">
+                                            <canvas id="approveSignatureCanvas" class="w-100 border rounded-2" style="height: 180px; touch-action: none; background-color: #fafafa; cursor: crosshair;"></canvas>
+                                            <div class="signature-line-guide text-muted text-center fs-9 py-1">Tanda tangani di atas area kanvas</div>
                                         </div>
                                         <input type="hidden" name="paraf_signature" id="paraf_signature">
-                                        <div class="mt-2 text-end">
-                                            <button type="button" class="btn btn-sm btn-light-danger fw-bold" onclick="clearApproveSignature()"><i class="fas fa-eraser me-1"></i> Bersihkan Paraf</button>
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <span class="text-muted fs-9"><i class="fas fa-info-circle me-1"></i>Gunakan mouse atau sentuhan jari</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger fw-bold" onclick="clearApproveSignature()"><i class="fas fa-eraser me-1"></i> Bersihkan Paraf</button>
                                         </div>
                                     </div>
                                     <!-- Upload Panel -->
                                     <div class="tab-pane fade" id="upload-panel" role="tabpanel" aria-labelledby="upload-tab">
-                                        <div class="border rounded bg-white p-4 text-center">
+                                        <div class="border border-dashed rounded-3 bg-light p-3 text-center upload-dropzone">
                                             <input type="file" name="paraf" id="approve_paraf_file" class="form-control" accept="image/jpeg,image/png,image/jpg" onchange="previewParafFile(this)">
-                                            <div class="text-muted mt-2 fs-9">Format: JPG, JPEG, PNG. Maks: 4MB.</div>
+                                            <div class="text-muted mt-2 fs-9"><i class="fas fa-file-image me-1"></i>Format: JPG, JPEG, PNG. Maks: 4MB.</div>
                                             <div id="paraf_file_preview" class="mt-3"></div>
                                         </div>
                                     </div>
@@ -598,51 +600,87 @@
                             
                             <div class="modal-footer px-0 pb-0 pt-4 border-top">
                                 <button type="button" class="btn btn-light btn-sm fw-bold" data-bs-dismiss="modal">Batal</button>
-                                <button type="submit" class="btn btn-primary btn-sm fw-bold"><i class="fas fa-check-double me-1"></i> Simpan Persetujuan</button>
+                                <button type="submit" class="btn btn-primary btn-sm fw-bold" id="btnSubmitApproveLaporan"><i class="fas fa-check-double me-1"></i> Simpan Persetujuan</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Modal Persetujuan -->
+        <!-- Modal Persetujuan (Export) -->
         <div class="modal fade" id="modalApproval" tabindex="-1" aria-labelledby="modalApprovalLabel" aria-hidden="true">
-            <div class="modal-dialog">
-                <form id="formApproval">
+            <div class="modal-dialog modal-dialog-centered">
+                <form id="formApproval" enctype="multipart/form-data">
                     @csrf
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title">Persetujuan Laporan</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <div class="modal-content border-0 shadow-lg">
+                        <div class="modal-header bg-light">
+                            <h5 class="modal-title fw-bold text-gray-800" id="modalApprovalLabel"><i class="fas fa-file-signature text-primary me-2"></i>Persetujuan Laporan Bulanan</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
 
-                        <div class="modal-body">
-                            <div class="alert alert-warning d-flex align-items-center gap-2" role="alert">
-                                <i class="fas fa-exclamation-triangle text-warning fs-4"></i>
-                                <div>
+                        <div class="modal-body p-4">
+                            <div class="alert alert-warning d-flex align-items-center gap-3 p-3 rounded-3 mb-4" role="alert">
+                                <i class="fas fa-exclamation-triangle text-warning fs-3"></i>
+                                <div class="fs-7">
                                     <strong>Perhatian:</strong> Laporan bulan ini belum <u>disetujui</u>. 
-                                    Harap isi nama dan tanda tangan untuk menyetujui sebelum melakukan ekspor.
+                                    Harap isi nama dan tanda tangan untuk menyetujui sebelum melakukan ekspor file Excel.
                                 </div>
                             </div>
 
                             <div class="mb-3">
-                                <label for="approval_nama" class="form-label">Nama Penyetuju</label>
-                                <input type="text" class="form-control" id="approval_nama" name="nama" required>
+                                <label for="approval_nama" class="form-label fw-bold text-gray-700">Nama Penyetuju <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control form-control-solid" id="approval_nama" name="nama" placeholder="Masukkan nama lengkap penyetuju" required>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Tanda Tangan</label>
-                                <canvas id="approvalCanvas" class="border" style="width:100%; height:200px;"></canvas>
-                                <input type="hidden" id="approval_ttd_base64" name="ttd_base64">
-                                <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="approvalPad.clear()">Hapus</button>
+                                <label class="form-label fw-bold text-gray-700">Tanda Tangan / Paraf <span class="text-danger">*</span></label>
+                                
+                                <!-- Mode Tabs -->
+                                <ul class="nav nav-pills nav-fill mb-3 p-1 bg-light rounded-3" id="approvalSignatureTabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active fw-bold py-2 fs-7" id="approval-canvas-tab" data-bs-toggle="pill" data-bs-target="#approval-canvas-panel" type="button" role="tab" aria-controls="approval-canvas-panel" aria-selected="true">
+                                            <i class="fas fa-pen-nib me-1"></i> Tulis Langsung
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link fw-bold py-2 fs-7" id="approval-upload-tab" data-bs-toggle="pill" data-bs-target="#approval-upload-panel" type="button" role="tab" aria-controls="approval-upload-panel" aria-selected="false">
+                                            <i class="fas fa-cloud-upload-alt me-1"></i> Unggah Gambar
+                                        </button>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content" id="approvalSignatureTabsContent">
+                                    <!-- Canvas Tab -->
+                                    <div class="tab-pane fade show active" id="approval-canvas-panel" role="tabpanel" aria-labelledby="approval-canvas-tab">
+                                        <div class="border rounded-3 bg-white p-2 signature-pad-container shadow-xs">
+                                            <canvas id="approvalCanvas" class="w-100 border rounded-2" style="height: 180px; touch-action: none; background-color: #fafafa; cursor: crosshair;"></canvas>
+                                            <div class="signature-line-guide text-muted text-center fs-9 py-1">Tanda tangani di atas area kanvas</div>
+                                        </div>
+                                        <input type="hidden" id="approval_ttd_base64" name="ttd_base64">
+                                        <div class="d-flex justify-content-between align-items-center mt-2">
+                                            <span class="text-muted fs-9"><i class="fas fa-info-circle me-1"></i>Gunakan mouse atau sentuhan jari</span>
+                                            <button type="button" class="btn btn-sm btn-outline-danger fw-bold" onclick="clearExportApprovalSignature()"><i class="fas fa-eraser me-1"></i> Bersihkan</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Upload Tab -->
+                                    <div class="tab-pane fade" id="approval-upload-panel" role="tabpanel" aria-labelledby="approval-upload-tab">
+                                        <div class="border border-dashed rounded-3 bg-light p-3 text-center upload-dropzone">
+                                            <input type="file" name="ttd_file" id="approval_ttd_file" class="form-control" accept="image/jpeg,image/png,image/jpg" onchange="previewExportApprovalFile(this)">
+                                            <div class="text-muted mt-2 fs-9"><i class="fas fa-file-image me-1"></i>Format: JPG, JPEG, PNG. Maks: 4MB.</div>
+                                            <div id="approval_file_preview" class="mt-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <input type="hidden" name="bulan" id="approval_bulan">
                             <input type="hidden" name="tahun" id="approval_tahun">
                         </div>
 
-                        <div class="modal-footer">
-                            <button type="submit" class="btn btn-primary">Simpan & Download</button>
+                        <div class="modal-footer bg-light border-top">
+                            <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Batal</button>
+                            <button type="submit" class="btn btn-primary fw-bold" id="btnSubmitApproval"><i class="fas fa-file-download me-1"></i> Simpan & Unduh</button>
                         </div>
                     </div>
                 </form>
@@ -1270,6 +1308,47 @@
                 padding: 0.35rem 0.65rem;
             }
         }
+
+        /* Signature Pad & Upload Styling */
+        .signature-pad-container {
+            background-color: #fafafa;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signature-pad-container canvas {
+            display: block;
+            touch-action: none;
+            cursor: crosshair;
+            background-color: #ffffff;
+        }
+
+        .signature-line-guide {
+            border-top: 1px dashed #cbd5e1;
+            margin-top: 4px;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            letter-spacing: 0.02em;
+        }
+
+        .upload-dropzone {
+            background-color: #f8fafc;
+            border: 2px dashed #cbd5e1 !important;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .upload-dropzone:hover {
+            border-color: #3b82f6 !important;
+            background-color: #eff6ff;
+        }
+
+        .preview-thumb-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
     </style>
 
     <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
@@ -1304,11 +1383,23 @@
         }
 
         function resizeCanvas(canvas, signaturePadInstance) {
+            if (!canvas || !signaturePadInstance) return;
+            const rect = canvas.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) return;
+
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            canvas.width = canvas.offsetWidth * ratio;
-            canvas.height = canvas.offsetHeight * ratio;
-            canvas.getContext("2d").scale(ratio, ratio);
+            const data = !signaturePadInstance.isEmpty() ? signaturePadInstance.toData() : null;
+
+            canvas.width = rect.width * ratio;
+            canvas.height = rect.height * ratio;
+
+            const ctx = canvas.getContext("2d");
+            ctx.scale(ratio, ratio);
+
             signaturePadInstance.clear();
+            if (data) {
+                signaturePadInstance.fromData(data);
+            }
         }
 
         let addModalJobs = [];
@@ -1371,6 +1462,13 @@
         }
 
         $(document).ready(function () {
+            // Prevent accessibility warning when hiding modal while descendant retains focus
+            $(document).on('hide.bs.modal', '.modal', function () {
+                if (document.activeElement && this.contains(document.activeElement)) {
+                    document.activeElement.blur();
+                }
+            });
+
             // Register event listeners for Add Modal
             $('#tanggal').on('change', function () {
                 const tanggal = $(this).val();
@@ -1465,10 +1563,21 @@
             });
 
             const approveCanvas = document.getElementById("approveSignatureCanvas");
-            approveSignaturePad = new SignaturePad(approveCanvas);
-            resizeCanvas(approveCanvas, approveSignaturePad);
+            if (approveCanvas) {
+                approveSignaturePad = new SignaturePad(approveCanvas, {
+                    minWidth: 1.5,
+                    maxWidth: 3.5,
+                    penColor: "#0f172a"
+                });
+            }
             const canvas = document.getElementById('approvalCanvas');
-            approvalPad = new SignaturePad(canvas);
+            if (canvas) {
+                approvalPad = new SignaturePad(canvas, {
+                    minWidth: 1.5,
+                    maxWidth: 3.5,
+                    penColor: "#0f172a"
+                });
+            }
 
             $('#filter_bulan, #filter_tahun').on('change', function () {
                 $('#filterForm').trigger('submit');
@@ -1864,8 +1973,9 @@
 
                 let activeTab = $('#signatureTabs button.active').attr('id');
                 let hasExistingParaf = $('#preview_paraf_approve img').length > 0;
-                let hasCanvas = !approveSignaturePad.isEmpty();
-                let hasFile = $('#approve_paraf_file').val() !== '';
+                let hasCanvas = approveSignaturePad && !approveSignaturePad.isEmpty();
+                let fileInput = document.getElementById('approve_paraf_file');
+                let hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
 
                 if (!hasExistingParaf && !hasCanvas && !hasFile) {
                     Swal.fire('Error', 'Paraf/Tanda tangan wajib diisi (silakan tulis langsung atau unggah berkas).', 'error');
@@ -1875,7 +1985,7 @@
                 if (activeTab === 'canvas-tab' && hasCanvas) {
                     const dataUrl = approveSignaturePad.toDataURL();
                     $('#paraf_signature').val(dataUrl);
-                    $('#approve_paraf_file').val('');
+                    if (fileInput) fileInput.value = '';
                 } else if (activeTab === 'upload-tab' && hasFile) {
                     $('#paraf_signature').val('');
                 }
@@ -1883,7 +1993,7 @@
                 const form = this;
                 const formData = new FormData(form);
                 const actionUrl = $(form).attr('action');
-                const btn = $(form).find('button[type="submit"]');
+                const btn = $('#btnSubmitApproveLaporan');
                 btn.attr('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...');
 
                 $.ajax({
@@ -1916,61 +2026,185 @@
                 });
             });
 
+            // Modal shown handlers for responsive canvas
             $('#approveLaporanModal').on('shown.bs.modal', function () {
                 const canvasEl = document.getElementById("approveSignatureCanvas");
-                if (canvasEl) {
+                if (canvasEl && approveSignaturePad) {
                     resizeCanvas(canvasEl, approveSignaturePad);
                 }
             });
 
+            $('#modalApproval').on('shown.bs.modal', function () {
+                const canvasEl = document.getElementById("approvalCanvas");
+                if (canvasEl && approvalPad) {
+                    resizeCanvas(canvasEl, approvalPad);
+                }
+            });
+
+            // Resize canvas when tab changes to canvas panel
+            $('button[data-bs-target="#canvas-panel"]').on('shown.bs.tab', function () {
+                const canvasEl = document.getElementById("approveSignatureCanvas");
+                if (canvasEl && approveSignaturePad) {
+                    resizeCanvas(canvasEl, approveSignaturePad);
+                }
+            });
+
+            $('button[data-bs-target="#approval-canvas-panel"]').on('shown.bs.tab', function () {
+                const canvasEl = document.getElementById("approvalCanvas");
+                if (canvasEl && approvalPad) {
+                    resizeCanvas(canvasEl, approvalPad);
+                }
+            });
+
+            // Window resize debounced canvas update
+            let signatureResizeDebounce;
+            $(window).on('resize', function () {
+                clearTimeout(signatureResizeDebounce);
+                signatureResizeDebounce = setTimeout(function () {
+                    if ($('#approveLaporanModal').hasClass('show')) {
+                        const canvasEl = document.getElementById("approveSignatureCanvas");
+                        if (canvasEl && approveSignaturePad) {
+                            resizeCanvas(canvasEl, approveSignaturePad);
+                        }
+                    }
+                    if ($('#modalApproval').hasClass('show')) {
+                        const canvasEl = document.getElementById("approvalCanvas");
+                        if (canvasEl && approvalPad) {
+                            resizeCanvas(canvasEl, approvalPad);
+                        }
+                    }
+                }, 150);
+            });
+
             window.clearApproveSignature = function () {
-                approveSignaturePad.clear();
+                if (approveSignaturePad) approveSignaturePad.clear();
                 $("#paraf_signature").val('');
                 $("#preview_paraf_approve").html('');
-                $("#approve_paraf_file").val('');
-                $("#paraf_file_preview").html('');
-            }
+                clearParafFileInput();
+            };
+
+            window.clearParafFileInput = function () {
+                const input = document.getElementById('approve_paraf_file');
+                if (input) input.value = '';
+                const preview = document.getElementById('paraf_file_preview');
+                if (preview) preview.innerHTML = '';
+            };
 
             window.previewParafFile = function (input) {
                 const file = input.files[0];
                 const preview = document.getElementById('paraf_file_preview');
+                if (!preview) return;
                 preview.innerHTML = '';
 
                 if (file && file.type.startsWith('image/')) {
                     const objectUrl = URL.createObjectURL(file);
-                    preview.innerHTML = `<img src="${objectUrl}" alt="Preview Paraf" class="img-thumbnail border p-1" style="max-height: 120px;">`;
+                    const fileSizeKb = (file.size / 1024).toFixed(1);
+                    preview.innerHTML = `
+                        <div class="card border border-primary border-dashed p-3 bg-light-primary text-center mt-2">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="fs-8 fw-bold text-gray-700 text-truncate me-2"><i class="fas fa-image text-primary me-1"></i>${file.name} (${fileSizeKb} KB)</span>
+                                <button type="button" class="btn btn-xs btn-icon btn-light-danger" onclick="clearParafFileInput()" title="Hapus Gambar"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="position-relative d-inline-block mx-auto">
+                                <img src="${objectUrl}" alt="Preview Paraf" class="img-thumbnail border p-1 shadow-sm" style="max-height: 120px; object-fit: contain; cursor: pointer;" onclick="$('#modalPreviewImage').attr('src', '${objectUrl}'); $('#imagePreviewModal').modal('show');">
+                            </div>
+                        </div>
+                    `;
+                }
+            };
+
+            window.clearExportApprovalFileInput = function () {
+                const input = document.getElementById('approval_ttd_file');
+                if (input) input.value = '';
+                const preview = document.getElementById('approval_file_preview');
+                if (preview) preview.innerHTML = '';
+            };
+
+            window.clearExportApprovalSignature = function () {
+                if (approvalPad) approvalPad.clear();
+                $('#approval_ttd_base64').val('');
+                clearExportApprovalFileInput();
+            };
+
+            window.previewExportApprovalFile = function (input) {
+                const file = input.files[0];
+                const preview = document.getElementById('approval_file_preview');
+                if (!preview) return;
+                preview.innerHTML = '';
+
+                if (file && file.type.startsWith('image/')) {
+                    const objectUrl = URL.createObjectURL(file);
+                    const fileSizeKb = (file.size / 1024).toFixed(1);
+                    preview.innerHTML = `
+                        <div class="card border border-primary border-dashed p-3 bg-light-primary text-center mt-2">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="fs-8 fw-bold text-gray-700 text-truncate me-2"><i class="fas fa-image text-primary me-1"></i>${file.name} (${fileSizeKb} KB)</span>
+                                <button type="button" class="btn btn-xs btn-icon btn-light-danger" onclick="clearExportApprovalFileInput()" title="Hapus Gambar"><i class="fas fa-times"></i></button>
+                            </div>
+                            <div class="position-relative d-inline-block mx-auto">
+                                <img src="${objectUrl}" alt="Preview TTD" class="img-thumbnail border p-1 shadow-sm" style="max-height: 120px; object-fit: contain; cursor: pointer;" onclick="$('#modalPreviewImage').attr('src', '${objectUrl}'); $('#imagePreviewModal').modal('show');">
+                            </div>
+                        </div>
+                    `;
                 }
             };
 
             $('#formApproval').on('submit', function (e) {
                 e.preventDefault();
 
-                if (approvalPad.isEmpty()) {
-                    return Swal.fire('Error', 'Tanda tangan belum diisi.', 'error');
+                let activeTab = $('#approvalSignatureTabs button.active').attr('id');
+                let hasCanvas = approvalPad && !approvalPad.isEmpty();
+                let fileInput = document.getElementById('approval_ttd_file');
+                let hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+                if (!hasCanvas && !hasFile) {
+                    return Swal.fire('Error', 'Tanda tangan atau unggahan berkas paraf wajib diisi.', 'error');
                 }
 
-                $('#approval_ttd_base64').val(approvalPad.toDataURL());
+                if (activeTab === 'approval-canvas-tab' && hasCanvas) {
+                    $('#approval_ttd_base64').val(approvalPad.toDataURL());
+                    if (fileInput) fileInput.value = '';
+                } else if (activeTab === 'approval-upload-tab' && hasFile) {
+                    $('#approval_ttd_base64').val('');
+                }
 
-                const formData = $(this).serialize();
+                const form = this;
+                const formData = new FormData(form);
+                const btn = $('#btnSubmitApproval');
+                btn.attr('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Menyimpan...');
 
-                $.post(`{{ route('laporanharian.storeapproval') }}`, formData, function (res) {
-                    $('#modalApproval').modal('hide');
+                $.ajax({
+                    url: `{{ route('laporanharian.storeapproval') }}`,
+                    method: "POST",
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function (res) {
+                        btn.removeAttr('disabled').html('<i class="fas fa-file-download me-1"></i> Simpan & Unduh');
+                        $('#modalApproval').modal('hide');
 
-                    const bulan = $('#approval_bulan').val();
-                    const tahun = $('#approval_tahun').val();
-                    const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
+                        const bulan = $('#approval_bulan').val();
+                        const tahun = $('#approval_tahun').val();
+                        const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
 
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Disetujui!',
-                        text: 'Laporan berhasil disetujui dan akan diunduh...',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.href = url;
-                    });
-                }).fail(function (xhr) {
-                    Swal.fire('Error', 'Gagal menyimpan persetujuan.', 'error');
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Disetujui!',
+                            text: 'Laporan berhasil disetujui dan akan diunduh...',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            window.location.href = url;
+                        });
+                    },
+                    error: function (xhr) {
+                        btn.removeAttr('disabled').html('<i class="fas fa-file-download me-1"></i> Simpan & Unduh');
+                        let message = 'Gagal menyimpan persetujuan.';
+                        if (xhr.responseJSON?.message) {
+                            message = xhr.responseJSON.message;
+                        }
+                        Swal.fire('Error', message, 'error');
+                    }
                 });
             });
 

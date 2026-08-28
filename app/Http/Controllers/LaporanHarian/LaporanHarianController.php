@@ -655,7 +655,7 @@ class LaporanHarianController extends Controller
             }
         }
 
-        $bulanNama = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->translatedFormat('F');
+        $bulanNama = \Carbon\Carbon::createFromDate($tahun, $bulan, 1)->locale('id')->translatedFormat('F');
         $namaFile = "LaporanHarian_{$bulanNama}_{$tahun}.xlsx";
 
         return Excel::download(new LaporanHarianExport($bulan, $tahun, $approval), $namaFile);
@@ -666,7 +666,8 @@ class LaporanHarianController extends Controller
     {
         $request->validate([
             'nama' => 'required|string|max:255',
-            'ttd_base64' => 'required|string',
+            'ttd_base64' => 'nullable|string',
+            'ttd_file' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
             'bulan' => 'required|numeric|min:1|max:12',
             'tahun' => 'required|numeric',
         ]);
@@ -676,13 +677,20 @@ class LaporanHarianController extends Controller
             ->exists();
 
         if ($exists) {
-            return response()->json(['message' => 'Sudah disetujui sebelumnya'], 409);
+            return response()->json(['message' => 'Laporan bulan ini sudah disetujui sebelumnya.'], 409);
         }
 
-        $base64 = str_replace(['data:image/png;base64,', ' '], ['', '+'], $request->ttd_base64);
-        $filename = 'ttd_' . uniqid() . '.png';
-        $path = "paraf_menyetujui/{$filename}";
-        Storage::disk('public')->put($path, base64_decode($base64));
+        $path = null;
+        if ($request->hasFile('ttd_file')) {
+            $path = $request->file('ttd_file')->store('paraf_menyetujui', 'public');
+        } elseif ($request->filled('ttd_base64')) {
+            $base64 = str_replace(['data:image/png;base64,', 'data:image/jpeg;base64,', 'data:image/jpg;base64,', ' '], ['', '', '', '+'], $request->ttd_base64);
+            $filename = 'ttd_' . uniqid() . '.png';
+            $path = "paraf_menyetujui/{$filename}";
+            Storage::disk('public')->put($path, base64_decode($base64));
+        } else {
+            return response()->json(['message' => 'Tanda tangan atau file paraf wajib diisi.'], 422);
+        }
 
         $approval = LaporanHarianApproval::create([
             'bulan' => $request->bulan,
