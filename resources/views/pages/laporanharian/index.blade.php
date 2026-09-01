@@ -667,7 +667,7 @@
                             </div>
 
                             <div class="mb-4">
-                                <label for="approve_mengetahui" class="form-label fw-bold text-gray-800">Mengetahui (Nama Supervisor) <span class="text-danger">*</span></label>
+                                <label for="approve_mengetahui" class="form-label fw-bold text-gray-800">Mengetahui (Nama Staff Support Operasional) <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control form-control-solid" id="approve_mengetahui" name="mengetahui" placeholder="Nama Supervisor / Pemberi Persetujuan" required>
                             </div>
 
