@@ -725,66 +725,109 @@
         </div>
         <!-- Modal Persetujuan (Export) -->
         <div class="modal fade" id="modalApproval" tabindex="-1" aria-labelledby="modalApprovalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-dialog modal-dialog-centered modal-approval-dialog">
                 <form id="formApproval" enctype="multipart/form-data">
                     @csrf
-                    <div class="modal-content border-0 shadow-lg">
-                        <div class="modal-header bg-light">
-                            <h5 class="modal-title fw-bold text-gray-800" id="modalApprovalLabel"><i class="fas fa-file-signature text-primary me-2"></i>Persetujuan Laporan Bulanan</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                        <!-- Modal Header with icon badge & period subtitle -->
+                        <div class="modal-header border-0 bg-light-subtle pb-2 pt-4 px-4 align-items-center justify-content-between">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="modal-approval-icon-box">
+                                    <i class="fas fa-file-signature text-primary fs-4"></i>
+                                </div>
+                                <div>
+                                    <h5 class="modal-title fw-bolder text-gray-900 mb-0" id="modalApprovalLabel">Persetujuan Ekspor Laporan</h5>
+                                    <span class="text-muted fs-8">Periode: <strong class="text-primary fw-bold" id="modal_period_text">-</strong></span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
 
-                        <div class="modal-body p-4">
-                            <div class="alert alert-warning d-flex align-items-center gap-3 p-3 rounded-3 mb-4" role="alert">
-                                <i class="fas fa-exclamation-triangle text-warning fs-3"></i>
-                                <div class="fs-7">
-                                    <strong>Perhatian:</strong> Laporan bulan ini belum <u>disetujui</u>. 
-                                    Harap isi nama dan tanda tangan untuk menyetujui sebelum melakukan ekspor file Excel.
+                        <div class="modal-body p-4 pt-3">
+                            <!-- Notice Banner -->
+                            <div class="approval-notice-banner mb-4">
+                                <div class="notice-icon flex-shrink-0">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div class="notice-text">
+                                    <div class="fw-bold text-gray-900 mb-1">Pengesahan Diperlukan</div>
+                                    <div class="text-muted fs-8">
+                                        Laporan periode ini belum disahkan. Lengkapi nama penyetuju dan paraf digital di bawah untuk mengekspor berkas Excel.
+                                    </div>
                                 </div>
                             </div>
 
-                            <div class="mb-3">
-                                <label for="approval_nama" class="form-label fw-bold text-gray-700">Nama Penyetuju <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control form-control-solid" id="approval_nama" name="nama" placeholder="Masukkan nama lengkap penyetuju" required>
+                            <!-- Input Nama Penyetuju -->
+                            <div class="mb-4">
+                                <label for="approval_nama" class="form-label fw-bold text-gray-800 fs-7 mb-2">
+                                    Nama Penyetuju / Supervisor <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group approval-input-group">
+                                    <span class="input-group-text bg-light border-end-0 text-muted">
+                                        <i class="fas fa-user-check"></i>
+                                    </span>
+                                    <input type="text" class="form-control bg-light border-start-0 ps-0" id="approval_nama" name="nama" placeholder="Masukkan nama lengkap penyetuju" required>
+                                </div>
                             </div>
 
+                            <!-- Signature Section -->
                             <div class="mb-3">
-                                <label class="form-label fw-bold text-gray-700">Tanda Tangan / Paraf <span class="text-danger">*</span></label>
-                                
-                                <!-- Mode Tabs -->
-                                <ul class="nav nav-pills nav-fill mb-3 p-1 bg-light rounded-3" id="approvalSignatureTabs" role="tablist">
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link active fw-bold py-2 fs-7" id="approval-canvas-tab" data-bs-toggle="pill" data-bs-target="#approval-canvas-panel" type="button" role="tab" aria-controls="approval-canvas-panel" aria-selected="true">
-                                            <i class="fas fa-pen-nib me-1"></i> Tulis Langsung
-                                        </button>
-                                    </li>
-                                    <li class="nav-item" role="presentation">
-                                        <button class="nav-link fw-bold py-2 fs-7" id="approval-upload-tab" data-bs-toggle="pill" data-bs-target="#approval-upload-panel" type="button" role="tab" aria-controls="approval-upload-panel" aria-selected="false">
-                                            <i class="fas fa-cloud-upload-alt me-1"></i> Unggah Gambar
-                                        </button>
-                                    </li>
-                                </ul>
+                                <label class="form-label fw-bold text-gray-800 fs-7 mb-2">
+                                    Tanda Tangan / Paraf <span class="text-danger">*</span>
+                                </label>
+
+                                <!-- Modern Segmented Nav Pills -->
+                                <div class="signature-nav-wrapper mb-3">
+                                    <ul class="nav nav-pills approval-segmented-pills" id="approvalSignatureTabs" role="tablist">
+                                        <li class="nav-item flex-fill" role="presentation">
+                                            <button class="nav-link active w-100 fw-bold fs-7 py-2" id="approval-canvas-tab" data-bs-toggle="pill" data-bs-target="#approval-canvas-panel" type="button" role="tab" aria-controls="approval-canvas-panel" aria-selected="true">
+                                                <i class="fas fa-pen-nib me-2"></i> Tulis Langsung
+                                            </button>
+                                        </li>
+                                        <li class="nav-item flex-fill" role="presentation">
+                                            <button class="nav-link w-100 fw-bold fs-7 py-2" id="approval-upload-tab" data-bs-toggle="pill" data-bs-target="#approval-upload-panel" type="button" role="tab" aria-controls="approval-upload-panel" aria-selected="false">
+                                                <i class="fas fa-cloud-arrow-up me-2"></i> Unggah Berkas TTD
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
 
                                 <div class="tab-content" id="approvalSignatureTabsContent">
                                     <!-- Canvas Tab -->
                                     <div class="tab-pane fade show active" id="approval-canvas-panel" role="tabpanel" aria-labelledby="approval-canvas-tab">
-                                        <div class="border rounded-3 bg-white p-2 signature-pad-container shadow-xs">
-                                            <canvas id="approvalCanvas" class="w-100 border rounded-2" style="height: 180px; touch-action: none; background-color: #fafafa; cursor: crosshair;"></canvas>
-                                            <div class="signature-line-guide text-muted text-center fs-9 py-1">Tanda tangani di atas area kanvas</div>
+                                        <div class="signature-canvas-card">
+                                            <div class="signature-canvas-header">
+                                                <span class="fs-8 text-muted"><i class="fas fa-pencil-alt me-1 text-primary"></i> Area Goresan Tanda Tangan</span>
+                                                <button type="button" class="btn btn-xs btn-outline-danger px-2 py-1 rounded-2 fw-semibold" onclick="clearExportApprovalSignature()" title="Bersihkan kanvas">
+                                                    <i class="fas fa-eraser me-1"></i> Bersihkan
+                                                </button>
+                                            </div>
+                                            <div class="signature-canvas-stage">
+                                                <canvas id="approvalCanvas" class="w-100"></canvas>
+                                                <div class="signature-watermark">
+                                                    <span class="watermark-line"></span>
+                                                    <span class="watermark-text">Tanda tangani di area ini</span>
+                                                </div>
+                                            </div>
                                         </div>
                                         <input type="hidden" id="approval_ttd_base64" name="ttd_base64">
-                                        <div class="d-flex justify-content-between align-items-center mt-2">
-                                            <span class="text-muted fs-9"><i class="fas fa-info-circle me-1"></i>Gunakan mouse atau sentuhan jari</span>
-                                            <button type="button" class="btn btn-sm btn-outline-danger fw-bold" onclick="clearExportApprovalSignature()"><i class="fas fa-eraser me-1"></i> Bersihkan</button>
+                                        <div class="d-flex align-items-center justify-content-between text-muted fs-8 mt-2 px-1">
+                                            <span><i class="fas fa-hand-pointer me-1 text-primary"></i> Gunakan mouse, stylus, atau jari di layar sentuh</span>
                                         </div>
                                     </div>
 
                                     <!-- Upload Tab -->
                                     <div class="tab-pane fade" id="approval-upload-panel" role="tabpanel" aria-labelledby="approval-upload-tab">
-                                        <div class="border border-dashed rounded-3 bg-light p-3 text-center upload-dropzone">
-                                            <input type="file" name="ttd_file" id="approval_ttd_file" class="form-control" accept="image/jpeg,image/png,image/jpg" onchange="previewExportApprovalFile(this)">
-                                            <div class="text-muted mt-2 fs-9"><i class="fas fa-file-image me-1"></i>Format: JPG, JPEG, PNG. Maks: 4MB.</div>
-                                            <div id="approval_file_preview" class="mt-3"></div>
+                                        <div class="signature-dropzone" onclick="document.getElementById('approval_ttd_file').click()">
+                                            <input type="file" name="ttd_file" id="approval_ttd_file" class="d-none" accept="image/jpeg,image/png,image/jpg" onchange="previewExportApprovalFile(this)">
+                                            <div id="approval_dropzone_empty">
+                                                <div class="dropzone-icon-circle mb-2">
+                                                    <i class="fas fa-cloud-arrow-up text-primary fs-3"></i>
+                                                </div>
+                                                <div class="fw-bold text-gray-800 fs-7 mb-1">Klik untuk Memilih Berkas Gambar</div>
+                                                <div class="text-muted fs-8">Mendukung format JPG, JPEG, PNG (Maksimal 4MB)</div>
+                                            </div>
+                                            <div id="approval_file_preview" class="d-none" onclick="event.stopPropagation()"></div>
                                         </div>
                                     </div>
                                 </div>
@@ -794,9 +837,14 @@
                             <input type="hidden" name="tahun" id="approval_tahun">
                         </div>
 
-                        <div class="modal-footer bg-light border-top">
-                            <button type="button" class="btn btn-light fw-bold" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-primary fw-bold" id="btnSubmitApproval"><i class="fas fa-file-download me-1"></i> Simpan & Unduh</button>
+                        <div class="modal-footer border-0 pt-0 pb-4 px-4 d-flex justify-content-end gap-2 bg-transparent">
+                            <button type="button" class="btn btn-light px-4 py-2 fw-semibold fs-7 rounded-3" data-bs-dismiss="modal">
+                                Batal
+                            </button>
+                            <button type="submit" class="btn btn-primary px-4 py-2 fw-bold fs-7 rounded-3 d-inline-flex align-items-center gap-2 shadow-sm" id="btnSubmitApproval">
+                                <i class="fas fa-file-download"></i>
+                                <span>Simpan & Ekspor Excel</span>
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -809,6 +857,34 @@
                         <img id="modalPreviewImage" src="" alt="Preview" class="img-fluid" style="max-height: 90vh; cursor: zoom-in;">
                         <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fullpage Excel Export Loader Overlay -->
+        <div id="exportLoadingOverlay" class="export-loading-overlay d-none">
+            <div class="export-loading-backdrop"></div>
+            <div class="export-loading-card">
+                <!-- Clean Symmetrical Loader Container (Full 62px height for both halves) -->
+                <div class="export-loader-container">
+                    <div class="loader"></div>
+                </div>
+
+                <!-- Text Info -->
+                <h4 class="export-loading-title">Sedang Menyiapkan Rekap Excel...</h4>
+                <p class="export-loading-desc">
+                    Mohon tunggu, sistem sedang memproses data rekap bulanan, menyusun lampiran bukti, dan paraf...
+                </p>
+
+                <!-- Sleek Hairline Progress Bar -->
+                <div class="shimmer-progress-track">
+                    <div class="shimmer-progress-bar"></div>
+                </div>
+
+                <!-- Clean Status Indicator -->
+                <div class="export-loading-subtext">
+                    <span class="pulse-dot"></span>
+                    <span class="export-status-label">Sedang memproses unduhan...</span>
                 </div>
             </div>
         </div>
@@ -1707,6 +1783,362 @@
                 font-size: 0.45rem;
             }
         }
+
+        /* =========================================================
+           Fullpage Loading Overlay for Excel Export (Clean & Sleek)
+           ========================================================= */
+        .export-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease, visibility 0.25s ease;
+        }
+
+        .export-loading-overlay.is-active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .export-loading-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        .export-loading-card {
+            position: relative;
+            z-index: 1;
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 2.25rem 2rem 1.75rem;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 0, 0, 0.04);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            animation: zoomInExportCard 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes zoomInExportCard {
+            from {
+                opacity: 0;
+                transform: scale(0.92) translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        /* Container with exact height (62px) to accommodate the full top & rotated bottom hexagon */
+        .export-loader-container {
+            width: 74px;
+            height: 62px;
+            margin: 0.5rem auto 1.5rem auto;
+            position: relative;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+        }
+
+        /* Custom User Loader CSS */
+        .loader {
+            width: 74px;
+            height: calc(27px * 0.866 + 6px);
+            display: grid;
+            position: relative;
+        }
+        .loader:before,
+        .loader:after {
+            content: "";
+            grid-area: 1/1;
+            background: #FD135A;
+            --c1: conic-gradient(from 150deg at top, #000 60deg, #0000 0);
+            --c2: conic-gradient(from -30deg at bottom, #000 60deg, #0000 0);
+            --s: 27px calc(27px * 0.866);
+            clip-path: polygon(17px 0, calc(100% - 17px) 0, 100% 100%, 0 100%);
+            -webkit-mask:
+                var(--c1) left 6px top 4px,
+                var(--c2) center,
+                var(--c1) right 6px top 4px,
+                linear-gradient(#000 0 0);
+            mask:
+                var(--c1) left 6px top 4px,
+                var(--c2) center,
+                var(--c1) right 6px top 4px,
+                linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            animation: l6 2s infinite both;
+        }
+        .loader:after {
+            transform: rotate(180deg);
+            transform-origin: 50% 99%;
+            animation-delay: 0.5s;
+        }
+        @keyframes l6 {
+            0%    { -webkit-mask-size: 0 0, 0 0, 0 0, auto; mask-size: 0 0, 0 0, 0 0, auto; }
+            8.33% { -webkit-mask-size: var(--s), 0 0, 0 0, auto; mask-size: var(--s), 0 0, 0 0, auto; }
+            16.67%{ -webkit-mask-size: var(--s), var(--s), 0 0, auto; mask-size: var(--s), var(--s), 0 0, auto; }
+            25%,
+            50%   { -webkit-mask-size: var(--s), var(--s), var(--s), auto; mask-size: var(--s), var(--s), var(--s), auto; }
+            58.33%{ -webkit-mask-size: 0 0, var(--s), var(--s), auto; mask-size: 0 0, var(--s), var(--s), auto; }
+            66.67%{ -webkit-mask-size: 0 0, 0 0, var(--s), auto; mask-size: 0 0, 0 0, var(--s), auto; }
+            75%,
+            100%  { -webkit-mask-size: 0 0, 0 0, 0 0, auto; mask-size: 0 0, 0 0, 0 0, auto; }
+        }
+
+        .export-loading-title {
+            color: #0f172a;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.35rem;
+        }
+
+        .export-loading-desc {
+            color: #64748b;
+            line-height: 1.5;
+            font-size: 0.84rem;
+            max-width: 320px;
+            margin: 0 auto 1.25rem auto;
+        }
+
+        /* Slim Shimmer Progress Bar */
+        .shimmer-progress-track {
+            width: 100%;
+            height: 4px;
+            background: #f1f5f9;
+            border-radius: 99px;
+            overflow: hidden;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+
+        .shimmer-progress-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 40%;
+            background: linear-gradient(90deg, #FD135A, #ff6b8b);
+            border-radius: 99px;
+            animation: shimmerSweep 1.6s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+        }
+
+        @keyframes shimmerSweep {
+            0% { left: -40%; }
+            100% { left: 100%; }
+        }
+
+        .export-loading-subtext {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            color: #FD135A;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pulse-dot {
+            width: 7px;
+            height: 7px;
+            background-color: #FD135A;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulseDotGlow 1.4s ease-out infinite;
+        }
+
+        @keyframes pulseDotGlow {
+            0% {
+                transform: scale(0.9);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.4);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(0.9);
+                opacity: 1;
+            }
+        }
+
+        /* =========================================================
+           Modal Approval Styling (High Polish)
+           ========================================================= */
+        .modal-approval-dialog {
+            max-width: 520px;
+        }
+
+        .modal-approval-icon-box {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: #eff6ff;
+            border: 1px solid #dbeafe;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.1);
+        }
+
+        .approval-notice-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-left: 4px solid #3b82f6;
+            border-radius: 12px;
+        }
+
+        .approval-notice-banner .notice-icon {
+            color: #3b82f6;
+            font-size: 1.15rem;
+            margin-top: 1px;
+        }
+
+        .approval-input-group .input-group-text {
+            border-radius: 10px 0 0 10px;
+            background-color: #f8fafc;
+            border-color: #e2e8f0;
+        }
+
+        .approval-input-group input.form-control {
+            border-radius: 0 10px 10px 0;
+            border-color: #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .approval-input-group input.form-control:focus {
+            background-color: #ffffff;
+            border-color: #3b82f6;
+            box-shadow: none;
+        }
+
+        .signature-nav-wrapper {
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 12px;
+        }
+
+        .approval-segmented-pills .nav-link {
+            border-radius: 9px;
+            color: #64748b;
+            transition: all 0.2s ease;
+            background: transparent;
+        }
+
+        .approval-segmented-pills .nav-link.active {
+            background: #ffffff;
+            color: #0f172a;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+        }
+
+        .signature-canvas-card {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            transition: border-color 0.2s ease;
+        }
+
+        .signature-canvas-card:hover,
+        .signature-canvas-card:focus-within {
+            border-color: #3b82f6;
+        }
+
+        .signature-canvas-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .signature-canvas-stage {
+            position: relative;
+            height: 180px;
+            background: #ffffff;
+        }
+
+        .signature-canvas-stage canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            touch-action: none;
+            cursor: crosshair;
+            position: relative;
+            z-index: 2;
+        }
+
+        .signature-watermark {
+            position: absolute;
+            bottom: 30px;
+            left: 20px;
+            right: 20px;
+            z-index: 1;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            opacity: 0.45;
+        }
+
+        .watermark-line {
+            width: 100%;
+            border-bottom: 1.5px dashed #94a3b8;
+            margin-bottom: 4px;
+        }
+
+        .watermark-text {
+            font-size: 0.72rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .signature-dropzone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 14px;
+            background: #f8fafc;
+            padding: 24px 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .signature-dropzone:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .dropzone-icon-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #eff6ff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
     </style>
 
     <script src="{{ asset('assets/plugins/global/plugins.bundle.js') }}"></script>
@@ -1721,6 +2153,98 @@
         const storageBaseUrl = @json(asset('storage'));
         let approveSignaturePad;
         let approvalPad;
+
+        function showExportLoader(titleText, descText) {
+            const $overlay = $('#exportLoadingOverlay');
+            if (titleText) {
+                $overlay.find('.export-loading-title').text(titleText);
+            } else {
+                $overlay.find('.export-loading-title').text('Menyiapkan Rekap Data Excel...');
+            }
+            if (descText) {
+                $overlay.find('.export-loading-desc').text(descText);
+            } else {
+                $overlay.find('.export-loading-desc').text('Mohon tunggu beberapa saat. Sistem sedang mengumpulkan data harian, menyusun tabel kerja, serta memproses lampiran bukti dan paraf.');
+            }
+            $overlay.removeClass('d-none');
+            // trigger reflow
+            void $overlay[0].offsetWidth;
+            $overlay.addClass('is-active');
+        }
+
+        function hideExportLoader() {
+            const $overlay = $('#exportLoadingOverlay');
+            $overlay.removeClass('is-active');
+            setTimeout(() => {
+                $overlay.addClass('d-none');
+            }, 300);
+        }
+
+        function downloadExcelFile(url, defaultFilename) {
+            showExportLoader('Sedang Menyiapkan Rekap Excel...', 'Mohon tunggu, sistem sedang memproses data rekap bulanan, menyusun lampiran bukti, dan paraf...');
+
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(async (response) => {
+                if (!response.ok) {
+                    let errMsg = 'Terjadi kesalahan saat memproses data Excel.';
+                    try {
+                        const errData = await response.json();
+                        if (errData && errData.message) errMsg = errData.message;
+                    } catch (e) {}
+                    throw new Error(errMsg);
+                }
+
+                let filename = defaultFilename || 'LaporanHarian.xlsx';
+                const disposition = response.headers.get('Content-Disposition');
+                if (disposition && disposition.indexOf('filename=') !== -1) {
+                    const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(disposition);
+                    if (matches != null && matches[1]) {
+                        filename = matches[1].replace(/['"]/g, '').trim();
+                    }
+                }
+
+                return response.blob().then((blob) => ({ blob, filename }));
+            })
+            .then(({ blob, filename }) => {
+                hideExportLoader();
+                const blobUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(blobUrl);
+                    $(a).remove();
+                }, 1000);
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Ekspor Berhasil!',
+                    text: 'File Excel laporan harian berhasil diunduh.',
+                    timer: 3000,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+            })
+            .catch((error) => {
+                hideExportLoader();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Mengekspor',
+                    text: error.message || 'Gagal mengunduh file Excel.',
+                    confirmButtonText: 'Tutup',
+                    confirmButtonColor: '#d33'
+                });
+            });
+        }
 
         function refreshPageSections() {
             // Reload Datatable dynamically
@@ -2207,23 +2731,31 @@
                             const bulan = $('#filter_bulan').val();
                             const tahun = $('#filter_tahun').val();
 
-                            // Check approval status via AJAX
+                            // Check approval status via AJAX with quick loader
+                            showExportLoader('Memeriksa Persetujuan...', 'Memeriksa status persetujuan laporan periode ini...');
+
                             $.get("{{ route('laporanharian.exportexcel') }}", {
                                 bulan,
                                 tahun,
                                 ajax: true
                             }).done(function (res) {
+                                hideExportLoader();
                                 if (res.needs_approval) {
-                                    // Tampilkan modal approval
+                                    // Tampilkan modal approval dengan teks periode
                                     $('#approval_bulan').val(bulan);
                                     $('#approval_tahun').val(tahun);
+                                    const namaBulan = $(`#filter_bulan option[value="${bulan}"]`).text().trim() || 'Bulan';
+                                    $('#modal_period_text').text(`${namaBulan} ${tahun}`);
                                     $('#modalApproval').modal('show');
                                 } else {
-                                    // Langsung download
+                                    // Langsung download dengan loader satu halaman
                                     const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
-                                    window.location.href = url;
+                                    const namaBulan = $('#filter_bulan option:selected').text().trim();
+                                    const defaultFilename = `LaporanHarian_${namaBulan}_${tahun}.xlsx`;
+                                    downloadExcelFile(url, defaultFilename);
                                 }
                             }).fail(function () {
+                                hideExportLoader();
                                 Swal.fire('Gagal', 'Terjadi kesalahan saat mengecek approval.', 'error');
                             });
                         }
@@ -2683,7 +3215,12 @@
                 const input = document.getElementById('approval_ttd_file');
                 if (input) input.value = '';
                 const preview = document.getElementById('approval_file_preview');
-                if (preview) preview.innerHTML = '';
+                if (preview) {
+                    preview.innerHTML = '';
+                    preview.classList.add('d-none');
+                }
+                const empty = document.getElementById('approval_dropzone_empty');
+                if (empty) empty.classList.remove('d-none');
             };
 
             window.clearExportApprovalSignature = function () {
@@ -2695,6 +3232,7 @@
             window.previewExportApprovalFile = function (input) {
                 const file = input.files[0];
                 const preview = document.getElementById('approval_file_preview');
+                const empty = document.getElementById('approval_dropzone_empty');
                 if (!preview) return;
                 preview.innerHTML = '';
 
@@ -2702,16 +3240,20 @@
                     const objectUrl = URL.createObjectURL(file);
                     const fileSizeKb = (file.size / 1024).toFixed(1);
                     preview.innerHTML = `
-                        <div class="card border border-primary border-dashed p-3 bg-light-primary text-center mt-2">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <span class="fs-8 fw-bold text-gray-700 text-truncate me-2"><i class="fas fa-image text-primary me-1"></i>${file.name} (${fileSizeKb} KB)</span>
-                                <button type="button" class="btn btn-xs btn-icon btn-light-danger" onclick="clearExportApprovalFileInput()" title="Hapus Gambar"><i class="fas fa-times"></i></button>
-                            </div>
-                            <div class="position-relative d-inline-block mx-auto">
-                                <img src="${objectUrl}" alt="Preview TTD" class="img-thumbnail border p-1 shadow-sm" style="max-height: 120px; object-fit: contain; cursor: pointer;" onclick="$('#modalPreviewImage').attr('src', '${objectUrl}'); $('#imagePreviewModal').modal('show');">
-                            </div>
+                        <div class="p-3 bg-white border rounded-3 shadow-xs d-inline-block text-center position-relative">
+                            <button type="button" class="btn btn-xs btn-icon btn-danger position-absolute top-0 end-0 m-1 rounded-circle" onclick="event.stopPropagation(); clearExportApprovalFileInput();" title="Hapus Gambar">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <img src="${objectUrl}" alt="Preview TTD" class="img-fluid rounded mb-2" style="max-height: 100px; object-fit: contain;">
+                            <div class="fs-8 fw-bold text-gray-800 text-truncate" style="max-width: 200px;">${file.name}</div>
+                            <div class="fs-9 text-muted">${fileSizeKb} KB</div>
                         </div>
                     `;
+                    preview.classList.remove('d-none');
+                    if (empty) empty.classList.add('d-none');
+                } else {
+                    preview.classList.add('d-none');
+                    if (empty) empty.classList.remove('d-none');
                 }
             };
 
@@ -2752,16 +3294,11 @@
                         const bulan = $('#approval_bulan').val();
                         const tahun = $('#approval_tahun').val();
                         const url = `{{ route('laporanharian.exportexcel') }}?bulan=${bulan}&tahun=${tahun}`;
+                        const namaBulan = $(`#filter_bulan option[value="${bulan}"]`).text().trim() || 'Bulan';
+                        const defaultFilename = `LaporanHarian_${namaBulan}_${tahun}.xlsx`;
 
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Disetujui!',
-                            text: 'Laporan berhasil disetujui dan akan diunduh...',
-                            timer: 1500,
-                            showConfirmButton: false
-                        }).then(() => {
-                            window.location.href = url;
-                        });
+                        // Langsung unduh dengan loader satu halaman
+                        downloadExcelFile(url, defaultFilename);
                     },
                     error: function (xhr) {
                         btn.removeAttr('disabled').html('<i class="fas fa-file-download me-1"></i> Simpan & Unduh');
